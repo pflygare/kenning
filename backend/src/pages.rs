@@ -17,6 +17,7 @@ use uuid::Uuid;
 use crate::{
     AppError, AppResult,
     audit::{self, Event},
+    categories::{self, PageCategory, PageValue},
     orgs,
     tags::{self, TagRef},
     topics::{self, TopicRef},
@@ -44,6 +45,11 @@ pub struct PageSummary {
     pub updated_by_name: String,
     #[ts(as = "Vec<TagRef>")]
     pub tags: Json<Vec<TagRef>>,
+    /// The page's category values.
+    #[ts(as = "Vec<PageValue>")]
+    pub values: Json<Vec<PageValue>>,
+    /// Whether a required category has no value, which blocks publishing.
+    pub missing_required: bool,
 }
 
 /// Which pages a list shows; every filter given must match.
@@ -52,6 +58,8 @@ pub struct ListFilter {
     /// A tag's slug.
     pub tag: Option<String>,
     pub topic_id: Option<Uuid>,
+    /// A category value's id.
+    pub value: Option<Uuid>,
 }
 
 /// One version of a page's content.
@@ -80,6 +88,7 @@ pub struct PageDetail {
     pub created_at: DateTime<Utc>,
     pub topics: Vec<TopicRef>,
     pub tags: Vec<TagRef>,
+    pub categories: Vec<PageCategory>,
 }
 
 /// The result of saving a draft.
@@ -176,7 +185,18 @@ pub async fn list(conn: &mut PgConnection, filter: &ListFilter) -> sqlx::Result<
                 coalesce((SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'slug', t.slug,
                                                             'color', t.color) ORDER BY lower(t.name))
                           FROM page_tags pt JOIN tags t ON t.id = pt.tag_id WHERE pt.page_id = p.id),
-                         '[]') AS tags
+                         '[]') AS tags,
+                coalesce((SELECT json_agg(json_build_object('category', c.name, 'id', v.id, 'name', v.name,
+                                                            'color', v.color) ORDER BY lower(c.name))
+                          FROM page_categories pc
+                          JOIN categories c ON c.id = pc.category_id
+                          JOIN category_values v ON v.id = pc.value_id
+                          WHERE pc.page_id = p.id),
+                         '[]') AS values,
+                EXISTS (SELECT 1 FROM kenning_required_categories(p.id) r
+                        WHERE NOT EXISTS (SELECT 1 FROM page_categories pc
+                                          WHERE pc.page_id = p.id AND pc.category_id = r.category_id))
+                    AS missing_required
          FROM pages p
          JOIN page_revisions cur ON cur.id = p.current_revision_id
          LEFT JOIN page_revisions pub ON pub.id = p.published_revision_id
@@ -187,12 +207,15 @@ pub async fn list(conn: &mut PgConnection, filter: &ListFilter) -> sqlx::Result<
                  WHERE pt.page_id = p.id AND t.slug = $1))
            AND ($2::uuid IS NULL OR EXISTS (
                  SELECT 1 FROM page_topics pt WHERE pt.page_id = p.id AND pt.topic_id = $2))
+           AND ($3::uuid IS NULL OR EXISTS (
+                 SELECT 1 FROM page_categories pc WHERE pc.page_id = p.id AND pc.value_id = $3))
          ORDER BY CASE WHEN $2::uuid IS NOT NULL THEN lower(coalesce(pub.title, cur.title)) END,
                   p.updated_at DESC
          LIMIT 200",
     )
     .bind(&filter.tag)
     .bind(filter.topic_id)
+    .bind(filter.value)
     .fetch_all(conn)
     .await
 }
@@ -313,6 +336,7 @@ pub async fn detail(conn: &mut PgConnection, short_id: &str) -> AppResult<PageDe
         created_at: page.created_at,
         topics: topics::for_page(conn, page.id).await?,
         tags: tags::for_page(conn, page.id).await?,
+        categories: categories::for_page(conn, page.id).await?,
     })
 }
 
@@ -392,6 +416,14 @@ pub async fn publish(
     }
     if page.published_revision_id == Some(revision_id) {
         return Ok(());
+    }
+    let missing = categories::missing_for_page(conn, page.id).await?;
+    if !missing.is_empty() {
+        return Err(AppError::coded(
+            StatusCode::CONFLICT,
+            "missing_categories",
+            format!("Choose {} before publishing.", missing.join(" and ")),
+        ));
     }
     let title: String = sqlx::query_scalar("SELECT title FROM page_revisions WHERE id = $1")
         .bind(revision_id)

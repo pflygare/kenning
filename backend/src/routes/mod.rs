@@ -5,6 +5,7 @@ use ts_rs::TS;
 use crate::{AppError, AppResult, AppState};
 
 mod auth;
+mod categories;
 mod dev;
 mod invites;
 mod orgs;
@@ -23,6 +24,7 @@ pub fn api() -> Router<AppState> {
         .merge(pages::routes())
         .merge(topics::routes())
         .merge(tags::routes())
+        .merge(categories::routes())
         .fallback(|| async { AppError::NotFound })
 }
 

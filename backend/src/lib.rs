@@ -4,6 +4,7 @@ pub mod accounts;
 pub mod app;
 pub mod audit;
 pub mod auth;
+pub mod categories;
 pub mod config;
 pub mod db;
 pub mod error;
