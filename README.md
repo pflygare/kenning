@@ -15,14 +15,22 @@ A team knowledge base in the spirit of [Slab](https://slab.com): a calm place to
 
 | Part | Tech | Directory |
 | --- | --- | --- |
-| Backend | Rust, [axum](https://github.com/tokio-rs/axum), tokio | `backend/` |
-| Frontend | TypeScript, React, [Vite](https://vite.dev) | `frontend/` |
+| Backend | Rust, [axum](https://github.com/tokio-rs/axum), tokio, [sqlx](https://github.com/launchbadge/sqlx) | `backend/` |
+| Database | PostgreSQL 17 | `backend/migrations/` |
+| Frontend | TypeScript, React, [React Router](https://reactrouter.com), [Vite](https://vite.dev) | `frontend/` |
 
 ## Getting started
 
-Prerequisites: Rust (stable) and Node.js 22+.
+Prerequisites: Rust (stable), Node.js 22+, and Docker (for Postgres) or a local PostgreSQL 16+.
 
-Start the backend (listens on `http://127.0.0.1:3000`, override with `PORT`):
+Start Postgres and point the backend at it:
+
+```sh
+docker compose up -d
+cp .env.example backend/.env
+```
+
+Start the backend. It applies migrations on startup and listens on `http://127.0.0.1:3000`:
 
 ```sh
 cd backend
@@ -40,9 +48,22 @@ npm run dev
 
 Then open http://localhost:5173.
 
+In production the backend serves the built frontend too: run `npm run build` and set `STATIC_DIR=../frontend/dist`.
+
+## How the backend is organized
+
+- **Migrations** live in `backend/migrations/` and run at startup (`sqlx::migrate!`).
+- **Tenancy:** organization-scoped work uses `db::begin_org`, which runs the transaction as the `kenning_app` role with the organization set, so Postgres row-level security hides other organizations' rows even if a query forgets to filter.
+- **Errors:** handlers return `AppResult<T>`; every error becomes `{"error": {"code", "message"}}` with a matching status.
+- **Audit log:** `audit::record` appends to `audit_events` inside the same transaction as the change. Events are hash-chained per organization and the table rejects UPDATE and DELETE.
+- **Jobs:** `jobs::enqueue` queues work in Postgres; `jobs::Worker` runs it with retries and backoff. Any number of servers can share the queue.
+- **API types:** structs marked `#[ts(export)]` are written to `frontend/src/api/types/` when `cargo test` runs. Commit the generated files; CI fails if they are stale.
+
 ## Checks
 
+Backend tests create a throwaway database per test, so `DATABASE_URL` must point at a user that can create databases (the Compose user can).
+
 ```sh
-cd backend && cargo fmt --check && cargo clippy -- -D warnings && cargo test
+cd backend && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 cd frontend && npm run lint && npm run build
 ```

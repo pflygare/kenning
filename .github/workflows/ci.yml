@@ -11,6 +11,22 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: kenning
+          POSTGRES_PASSWORD: kenning
+          POSTGRES_DB: kenning
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U kenning"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://kenning:kenning@localhost:5432/kenning
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -20,8 +36,15 @@ jobs:
         with:
           workspaces: backend
       - run: cargo fmt --check
-      - run: cargo clippy -- -D warnings
+      - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
+      - name: Check generated TypeScript types are committed
+        run: |
+          if [ -n "$(git status --porcelain -- ../frontend/src/api/types)" ]; then
+            git status --porcelain -- ../frontend/src/api/types
+            echo "::error::API types changed. Run 'cargo test' in backend/ and commit frontend/src/api/types."
+            exit 1
+          fi
 
   frontend:
     runs-on: ubuntu-latest
