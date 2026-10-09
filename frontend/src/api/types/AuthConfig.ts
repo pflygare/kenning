@@ -4,4 +4,8 @@ export type AuthConfig = {
 /**
  * Whether "Sign in with Google" is available.
  */
-google: boolean, };
+google: boolean, 
+/**
+ * Whether the testing page at `/dev` is on.
+ */
+dev_tools: boolean, };

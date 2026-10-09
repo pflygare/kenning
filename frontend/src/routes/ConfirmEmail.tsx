@@ -5,7 +5,7 @@ import { useAction } from '../hooks/useAction'
 
 /** Shown instead of the app until the signed-in user confirms their email. */
 export default function ConfirmEmail() {
-  const { me, logout } = useAuth()
+  const { me, config, refresh, logout } = useAuth()
   const [resent, setResent] = useState(false)
   const { busy, error, run } = useAction()
   if (!me) return null
@@ -14,6 +14,13 @@ export default function ConfirmEmail() {
     run(async () => {
       await apiPost('/auth/resend-verification')
       setResent(true)
+    })
+
+  // Testing shortcut, only when the server has DEV_TOOLS on.
+  const confirmNow = () =>
+    run(async () => {
+      await apiPost('/dev/confirm-email')
+      await refresh()
     })
 
   return (
@@ -29,6 +36,11 @@ export default function ConfirmEmail() {
         <button disabled={busy} onClick={() => void resend()}>
           Send the link again
         </button>
+        {config.dev_tools && (
+          <button disabled={busy} onClick={() => void confirmNow()}>
+            Testing: confirm without the email
+          </button>
+        )}
         <button className="link" onClick={() => void logout()}>
           Wrong address? Sign out
         </button>

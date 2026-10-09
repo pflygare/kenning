@@ -43,11 +43,14 @@ pub fn routes() -> Router<AppState> {
 pub struct AuthConfig {
     /// Whether "Sign in with Google" is available.
     pub google: bool,
+    /// Whether the testing page at `/dev` is on.
+    pub dev_tools: bool,
 }
 
 async fn config(State(state): State<AppState>) -> Json<AuthConfig> {
     Json(AuthConfig {
         google: state.google.is_some(),
+        dev_tools: state.config.dev_tools,
     })
 }
 

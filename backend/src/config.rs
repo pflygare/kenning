@@ -29,6 +29,11 @@ pub struct Config {
     pub smtp_url: Option<String>,
     /// Sender of outgoing email (`MAIL_FROM`, default `Kenning <no-reply@localhost>`).
     pub mail_from: String,
+    /// The testing page at `/dev`: an outbox of every email sent and
+    /// shortcuts such as confirming your email without one (`DEV_TOOLS`,
+    /// default false). It lets anyone read every email, password resets
+    /// included, so never turn it on where real people sign up.
+    pub dev_tools: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -65,6 +70,7 @@ impl Config {
         let smtp_url = non_empty(&get, "SMTP_URL");
         let mail_from = non_empty(&get, "MAIL_FROM")
             .unwrap_or_else(|| "Kenning <no-reply@localhost>".to_string());
+        let dev_tools = parse_or(&get, "DEV_TOOLS", false)?;
 
         Ok(Self {
             database_url,
@@ -76,6 +82,7 @@ impl Config {
             google,
             smtp_url,
             mail_from,
+            dev_tools,
         })
     }
 
@@ -139,6 +146,7 @@ mod tests {
         assert_eq!(config.bind_addr.to_string(), "127.0.0.1");
         assert_eq!(config.database_max_connections, 10);
         assert!(config.static_dir.is_none());
+        assert!(!config.dev_tools);
     }
 
     #[test]

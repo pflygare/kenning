@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import './index.css'
 import AuthProvider from './auth/AuthProvider.tsx'
 import RequireAuth from './auth/RequireAuth.tsx'
+import DevTools from './routes/DevTools.tsx'
 import ForgotPassword from './routes/ForgotPassword.tsx'
 import Home from './routes/Home.tsx'
 import Invite from './routes/Invite.tsx'
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
       { path: 'reset-password', element: <ResetPassword /> },
       { path: 'verify-email', element: <VerifyEmail /> },
       { path: 'invite/:token', element: <Invite /> },
+      { path: 'dev', element: <DevTools /> },
       {
         path: 'new-org',
         element: (

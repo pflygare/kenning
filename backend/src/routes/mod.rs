@@ -5,6 +5,7 @@ use ts_rs::TS;
 use crate::{AppError, AppResult, AppState};
 
 mod auth;
+mod dev;
 mod invites;
 mod orgs;
 
@@ -15,6 +16,7 @@ pub fn api() -> Router<AppState> {
         .merge(auth::routes())
         .merge(orgs::routes())
         .merge(invites::routes())
+        .merge(dev::routes())
         .fallback(|| async { AppError::NotFound })
 }
 

@@ -79,6 +79,7 @@ const RESERVED_SLUGS: &[&str] = &[
     "app",
     "assets",
     "auth",
+    "dev",
     "favicon-svg",
     "forgot-password",
     "help",

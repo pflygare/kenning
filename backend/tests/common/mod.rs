@@ -55,6 +55,16 @@ impl Browser {
         }
     }
 
+    /// A browser on an app with the testing page (`DEV_TOOLS`) turned on.
+    pub fn with_dev_tools(pool: &PgPool) -> Self {
+        let mut config = Config::for_tests();
+        config.dev_tools = true;
+        Self {
+            app: router(AppState::new(pool.clone(), config).unwrap()),
+            session: None,
+        }
+    }
+
     pub async fn request(
         &mut self,
         method: Method,

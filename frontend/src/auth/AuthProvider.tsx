@@ -18,7 +18,7 @@ async function fetchMe(): Promise<Me | null> {
 /** Loads the session once, then shares it with the whole app. */
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null)
-  const [config, setConfig] = useState<AuthConfig>({ google: false })
+  const [config, setConfig] = useState<AuthConfig>({ google: false, dev_tools: false })
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

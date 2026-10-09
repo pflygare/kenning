@@ -48,7 +48,7 @@ npm run dev
 
 Then open http://localhost:5173 and create an account. Set `PUBLIC_URL=http://localhost:5173` in `backend/.env` so emailed links point at the dev server.
 
-Without `SMTP_URL`, emails (confirmation, password reset, invitations) are printed in the backend's log; open the link from there. Google sign-in appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (see `.env.example`).
+Without `SMTP_URL`, emails (confirmation, password reset, invitations) are printed in the backend's log. For local testing, set `DEV_TOOLS=true` to get a Testing page at `/dev` that lists every email with clickable links and can confirm your email in one click. Never turn it on where real people sign up. Google sign-in appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (see `.env.example`).
 
 In production the backend serves the built frontend too: run `npm run build` and set `STATIC_DIR=../frontend/dist`.
 

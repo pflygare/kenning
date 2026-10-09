@@ -20,6 +20,11 @@ async fn main() -> anyhow::Result<()> {
     db::migrate(&pool).await?;
 
     let mailer = mail::Mailer::from_config(&config)?;
+    if config.dev_tools {
+        tracing::warn!(
+            "DEV_TOOLS is on: anyone can read every email at /dev; never use this in production"
+        );
+    }
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
     let worker =
         tokio::spawn(mail::register(jobs::Worker::new(pool.clone()), mailer).run(shutdown_rx));

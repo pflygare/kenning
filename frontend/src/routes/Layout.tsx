@@ -5,7 +5,7 @@ import styles from './Layout.module.css'
 const NEW_ORG = '__new__'
 
 export default function Layout() {
-  const { me, logout } = useAuth()
+  const { me, config, logout } = useAuth()
   const { org: slug } = useParams()
   const navigate = useNavigate()
 
@@ -34,6 +34,7 @@ export default function Layout() {
           </select>
         )}
         <span className={styles.spacer} />
+        {config.dev_tools && <Link to="/dev">Testing</Link>}
         {me ? (
           <div className="row">
             <span className={styles.user} title={me.user.email}>

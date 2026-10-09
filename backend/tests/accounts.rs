@@ -323,7 +323,7 @@ async fn google_is_hidden_when_not_configured(pool: PgPool) {
     let mut browser = Browser::new(&pool);
     assert_eq!(
         browser.get("/api/auth/config").await.1,
-        json!({"google": false})
+        json!({"google": false, "dev_tools": false})
     );
     assert_eq!(
         browser.get("/api/auth/google/start").await.0,
