@@ -1,32 +1,13 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
-use axum::{Json, Router, routing::get};
-use serde::Serialize;
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use kenning_server::{AppState, Config, db, jobs, router};
+use tokio::sync::watch;
 use tracing_subscriber::EnvFilter;
 
-#[derive(Serialize)]
-struct Health {
-    status: &'static str,
-    version: &'static str,
-}
-
-async fn health() -> Json<Health> {
-    Json(Health {
-        status: "ok",
-        version: env!("CARGO_PKG_VERSION"),
-    })
-}
-
-fn app() -> Router {
-    Router::new()
-        .route("/api/health", get(health))
-        .layer(CorsLayer::permissive())
-        .layer(TraceLayer::new_for_http())
-}
-
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
+    // A local .env is optional; real deployments set the environment directly.
+    let _ = dotenvy::dotenv();
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::try_from_default_env()
@@ -34,26 +15,48 @@ async fn main() {
         )
         .init();
 
-    let port: u16 = std::env::var("PORT")
-        .ok()
-        .and_then(|p| p.parse().ok())
-        .unwrap_or(3000);
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let config = Config::from_env()?;
+    let pool = db::connect(&config).await?;
+    db::migrate(&pool).await?;
 
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .expect("bind address");
+    let (shutdown_tx, shutdown_rx) = watch::channel(false);
+    let worker = tokio::spawn(jobs::Worker::new(pool.clone()).run(shutdown_rx));
+
+    let addr = SocketAddr::new(config.bind_addr, config.port);
+    let state = AppState {
+        pool,
+        config: Arc::new(config),
+    };
+    let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("listening on http://{addr}");
-    axum::serve(listener, app()).await.expect("server error");
+    axum::serve(listener, router(state))
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+
+    let _ = shutdown_tx.send(true);
+    worker.await?;
+    Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("install Ctrl+C handler");
+    };
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("install SIGTERM handler")
+            .recv()
+            .await;
+    };
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
 
-    #[tokio::test]
-    async fn health_returns_ok() {
-        let Json(body) = health().await;
-        assert_eq!(body.status, "ok");
+    tokio::select! {
+        _ = ctrl_c => {}
+        _ = terminate => {}
     }
+    tracing::info!("shutting down");
 }
