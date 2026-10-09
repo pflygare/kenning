@@ -46,7 +46,9 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:5173.
+Then open http://localhost:5173 and create an account. Set `PUBLIC_URL=http://localhost:5173` in `backend/.env` so emailed links point at the dev server.
+
+Without `SMTP_URL`, emails (confirmation, password reset, invitations) are printed in the backend's log. For local testing, set `DEV_TOOLS=true` to get a Testing page at `/dev` that lists every email with clickable links and can confirm your email in one click. Never turn it on where real people sign up. Google sign-in appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (see `.env.example`).
 
 In production the backend serves the built frontend too: run `npm run build` and set `STATIC_DIR=../frontend/dist`.
 
@@ -54,6 +56,8 @@ In production the backend serves the built frontend too: run `npm run build` and
 
 - **Migrations** live in `backend/migrations/` and run at startup (`sqlx::migrate!`).
 - **Tenancy:** organization-scoped work uses `db::begin_org`, which runs the transaction as the `kenning_app` role with the organization set, so Postgres row-level security hides other organizations' rows even if a query forgets to filter.
+- **Accounts:** people sign up with email and password or with Google; a Google sign-in with the same verified address joins the existing account. Sessions are random tokens in an HttpOnly cookie (`kenning_session`), stored hashed. Requests that change data must be JSON, which, with the SameSite cookie, blocks cross-site forgery.
+- **Organizations:** anyone with a confirmed email can create one and becomes its owner. Owners and admins invite people by email, whether or not they have an account yet; only owners can make owners, and the last owner cannot leave or be demoted.
 - **Errors:** handlers return `AppResult<T>`; every error becomes `{"error": {"code", "message"}}` with a matching status.
 - **Audit log:** `audit::record` appends to `audit_events` inside the same transaction as the change. Events are hash-chained per organization and the table rejects UPDATE and DELETE.
 - **Jobs:** `jobs::enqueue` queues work in Postgres; `jobs::Worker` runs it with retries and backoff. Any number of servers can share the queue.

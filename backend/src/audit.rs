@@ -87,6 +87,18 @@ pub struct StoredEvent {
 /// the change and its record commit or roll back together. For an
 /// organization's event, use a transaction from [`crate::db::begin_org`].
 pub async fn record(conn: &mut PgConnection, event: Event) -> sqlx::Result<StoredEvent> {
+    // An organization's event in a transaction not yet scoped to any
+    // organization adopts that organization, so row-level security admits it.
+    // A transaction scoped to a different organization still gets refused.
+    if let Some(org_id) = event.org_id {
+        sqlx::query(
+            "SELECT set_config('app.org_id', $1, true) WHERE coalesce(current_setting('app.org_id', true), '') = ''",
+        )
+        .bind(org_id.to_string())
+        .execute(&mut *conn)
+        .await?;
+    }
+
     // Serialize writers per chain so two events never claim the same parent.
     sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))")
         .bind(chain_key(event.org_id))

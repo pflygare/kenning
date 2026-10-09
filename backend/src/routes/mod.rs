@@ -4,10 +4,19 @@ use ts_rs::TS;
 
 use crate::{AppError, AppResult, AppState};
 
+mod auth;
+mod dev;
+mod invites;
+mod orgs;
+
 /// Routes mounted under `/api`.
 pub fn api() -> Router<AppState> {
     Router::new()
         .route("/health", get(health))
+        .merge(auth::routes())
+        .merge(orgs::routes())
+        .merge(invites::routes())
+        .merge(dev::routes())
         .fallback(|| async { AppError::NotFound })
 }
 

@@ -22,6 +22,13 @@ pub enum AppError {
     NotFound,
     #[error("{0}")]
     Conflict(String),
+    /// Any other client error with its own status and code.
+    #[error("{message}")]
+    Coded {
+        status: StatusCode,
+        code: &'static str,
+        message: String,
+    },
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -43,6 +50,14 @@ pub struct ErrorDetail {
 }
 
 impl AppError {
+    pub fn coded(status: StatusCode, code: &'static str, message: impl Into<String>) -> Self {
+        Self::Coded {
+            status,
+            code,
+            message: message.into(),
+        }
+    }
+
     fn status_and_code(&self) -> (StatusCode, &'static str) {
         match self {
             Self::BadRequest(_) => (StatusCode::BAD_REQUEST, "bad_request"),
@@ -50,6 +65,7 @@ impl AppError {
             Self::Forbidden => (StatusCode::FORBIDDEN, "forbidden"),
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found"),
             Self::Conflict(_) => (StatusCode::CONFLICT, "conflict"),
+            Self::Coded { status, code, .. } => (*status, code),
             Self::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal"),
         }
     }
