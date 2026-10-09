@@ -31,9 +31,10 @@ export default function Login() {
 
   return (
     <>
-      <h1>Sign in to Kenning</h1>
+      <h1>Welcome back</h1>
+      <p>Sign in to your Kenning account.</p>
       {search.get('error') === 'google' && (
-        <p className="error">Google sign-in did not complete. Please try again.</p>
+        <p className="alert error">Google sign-in did not complete. Please try again.</p>
       )}
       {config.google && (
         <>
@@ -43,7 +44,7 @@ export default function Login() {
       )}
       <form className="form" onSubmit={submit}>
         <label>
-          Email
+          Email address
           <input
             type="email"
             autoComplete="email"
@@ -53,7 +54,12 @@ export default function Login() {
           />
         </label>
         <label>
-          Password
+          <span className="row" style={{ justifyContent: 'space-between' }}>
+            Password
+            <Link to="/forgot-password" className="hint">
+              Forgot password?
+            </Link>
+          </span>
           <input
             type="password"
             autoComplete="current-password"
@@ -63,14 +69,12 @@ export default function Login() {
           />
         </label>
         {error && <p className="error">{error}</p>}
-        <button className="primary" type="submit" disabled={busy}>
+        <button className="primary block" type="submit" disabled={busy}>
           Sign in
         </button>
       </form>
-      <p className="muted">
-        <Link to="/forgot-password">Forgot your password?</Link>
-        <br />
-        New here? <Link to={`/signup${search.size ? `?${search}` : ''}`}>Create an account</Link>
+      <p className="footer">
+        New to Kenning? <Link to={`/signup${search.size ? `?${search}` : ''}`}>Create an account</Link>
       </p>
     </>
   )

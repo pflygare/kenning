@@ -1,58 +1,67 @@
 import { Link, Outlet, useNavigate, useParams } from 'react-router'
 import { useAuth } from '../auth/context'
+import { Wordmark } from '../components/Logo'
+import UserMenu from '../components/UserMenu'
 import styles from './Layout.module.css'
 
 const NEW_ORG = '__new__'
 
+/** The signed-in app's frame: top bar with organization switcher and account menu. */
 export default function Layout() {
-  const { me, config, logout } = useAuth()
+  const { me, config } = useAuth()
   const { org: slug } = useParams()
   const navigate = useNavigate()
-
-  const switchOrg = (value: string) => navigate(value === NEW_ORG ? '/new-org' : `/${value}`)
+  const inOrg = me?.orgs.some((o) => o.slug === slug)
 
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
-        <Link to="/" className={styles.brand}>
-          Kenning
+        <Link to="/" className={styles.brand} aria-label="Kenning home">
+          <Wordmark size={26} />
         </Link>
         {me && me.orgs.length > 0 && (
-          <select
-            className={styles.orgs}
-            aria-label="Organization"
-            value={me.orgs.some((o) => o.slug === slug) ? slug : ''}
-            onChange={(e) => switchOrg(e.target.value)}
-          >
-            {!me.orgs.some((o) => o.slug === slug) && <option value="">Choose organization</option>}
-            {me.orgs.map((org) => (
-              <option key={org.id} value={org.slug}>
-                {org.name}
-              </option>
-            ))}
-            <option value={NEW_ORG}>New organization…</option>
-          </select>
+          <>
+            <span className={styles.separator} aria-hidden="true">
+              /
+            </span>
+            <select
+              className={styles.orgs}
+              aria-label="Organization"
+              value={inOrg ? slug : ''}
+              onChange={(e) =>
+                navigate(e.target.value === NEW_ORG ? '/new-org' : `/${e.target.value}`)
+              }
+            >
+              {!inOrg && <option value="">Choose organization</option>}
+              {me.orgs.map((org) => (
+                <option key={org.id} value={org.slug}>
+                  {org.name}
+                </option>
+              ))}
+              <option value={NEW_ORG}>+ New organization</option>
+            </select>
+          </>
         )}
         <span className={styles.spacer} />
-        {config.dev_tools && <Link to="/dev">Testing</Link>}
+        {config.dev_tools && (
+          <Link to="/dev" className={styles.testing}>
+            Testing
+          </Link>
+        )}
         {me ? (
-          <div className="row">
-            <span className={styles.user} title={me.user.email}>
-              {me.user.avatar_url && (
-                <img className={styles.avatar} src={me.user.avatar_url} alt="" />
-              )}
-              {me.user.name}
-            </span>
-            {/* Protected pages send you to the login page on their own. */}
-            <button onClick={() => void logout()}>Sign out</button>
-          </div>
+          <UserMenu user={me.user} />
         ) : (
-          <Link to="/login">Sign in</Link>
+          <div className="row">
+            <Link to="/login" className="button">
+              Sign in
+            </Link>
+            <Link to="/signup" className="button primary">
+              Get started
+            </Link>
+          </div>
         )}
       </header>
-      <main className={styles.main}>
-        <Outlet />
-      </main>
+      <Outlet />
     </div>
   )
 }

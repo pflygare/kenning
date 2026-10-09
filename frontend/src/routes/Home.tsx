@@ -1,22 +1,31 @@
 import { Link, Navigate } from 'react-router'
 import { useAuth } from '../auth/context'
+import { LogoMark } from '../components/Logo'
+import Page from '../components/Page'
 import ConfirmEmail from './ConfirmEmail'
+import styles from './Home.module.css'
 
 export default function Home() {
   const { me } = useAuth()
 
   if (!me) {
     return (
-      <>
-        <h1>Kenning</h1>
-        <p>A wiki for your team's knowledge.</p>
+      <main className={styles.hero}>
+        <LogoMark size={72} />
+        <h1>Your team's knowledge, in one calm place</h1>
+        <p>
+          Kenning is a wiki for writing things down, organizing them into topics, and finding them
+          again when you need them.
+        </p>
         <div className="row">
-          <Link className="button" to="/signup">
-            Create an account
+          <Link className="button primary" to="/signup">
+            Create a free account
           </Link>
-          <Link to="/login">Sign in</Link>
+          <Link className="button" to="/login">
+            Sign in
+          </Link>
         </div>
-      </>
+      </main>
     )
   }
 
@@ -29,22 +38,36 @@ export default function Home() {
   }
 
   return (
-    <>
-      <h1>Welcome, {me.user.name}</h1>
-      {me.orgs.length === 0 ? (
-        <p>You are not in any organization yet. Create one, or ask a colleague to invite you.</p>
-      ) : (
-        <ul>
+    <Page narrow>
+      <div className="page-header">
+        <div>
+          <h1>Welcome, {me.user.name.split(' ')[0]}</h1>
+          <p>
+            {me.orgs.length === 0
+              ? 'Create an organization for your team, or ask a colleague to invite you to theirs.'
+              : 'Choose an organization to continue.'}
+          </p>
+        </div>
+      </div>
+      {me.orgs.length > 0 && (
+        <ul className={styles.orgs}>
           {me.orgs.map((org) => (
             <li key={org.id}>
-              <Link to={`/${org.slug}`}>{org.name}</Link>
+              <Link to={`/${org.slug}`} className={styles.org}>
+                <span className={styles.orgIcon}>{org.name[0]?.toUpperCase()}</span>
+                <span>
+                  <span className={styles.orgName}>{org.name}</span>
+                  <span className="muted">kenning/{org.slug}</span>
+                </span>
+                <span className="badge">{org.role}</span>
+              </Link>
             </li>
           ))}
         </ul>
       )}
-      <Link className="button" to="/new-org">
-        Create an organization
+      <Link className={me.orgs.length ? 'button' : 'button primary'} to="/new-org">
+        + Create an organization
       </Link>
-    </>
+    </Page>
   )
 }
