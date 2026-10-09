@@ -35,6 +35,7 @@ export default function Signup() {
   return (
     <>
       <h1>Create your account</h1>
+      <p>Start writing things down with your team.</p>
       {config.google && (
         <>
           <GoogleButton next={next} />
@@ -52,7 +53,7 @@ export default function Signup() {
           />
         </label>
         <label>
-          Email
+          Email address
           <input
             type="email"
             autoComplete="email"
@@ -73,11 +74,11 @@ export default function Signup() {
           />
         </label>
         {error && <p className="error">{error}</p>}
-        <button className="primary" type="submit" disabled={busy}>
+        <button className="primary block" type="submit" disabled={busy}>
           Create account
         </button>
       </form>
-      <p className="muted">
+      <p className="footer">
         Already have an account? <Link to={`/login${search.size ? `?${search}` : ''}`}>Sign in</Link>
       </p>
     </>

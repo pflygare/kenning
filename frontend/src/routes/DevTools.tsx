@@ -4,6 +4,7 @@ import { apiGet, apiPost, errorMessage } from '../api/client'
 import type { OutboxEmail } from '../api/types/OutboxEmail'
 import { useAuth } from '../auth/context'
 import { useAction } from '../hooks/useAction'
+import Page from '../components/Page'
 import NotFound from './NotFound'
 
 /** Shortcuts for trying Kenning without a mail server. Only on with `DEV_TOOLS`. */
@@ -13,15 +14,20 @@ export default function DevTools() {
     return <NotFound />
   }
   return (
-    <>
-      <h1>Testing</h1>
+    <Page>
+      <div className="page-header">
+        <div>
+          <h1>Testing</h1>
+          <p>Shortcuts for trying Kenning without a mail server.</p>
+        </div>
+      </div>
       <p className="notice">
         These tools are on because the server has <code>DEV_TOOLS=true</code>. Anyone can read
         every email here, so never turn it on where real people sign up.
       </p>
       <Account />
       <Outbox />
-    </>
+    </Page>
   )
 }
 
@@ -36,14 +42,14 @@ function Account() {
     })
 
   return (
-    <section>
+    <section className="card">
       <h2>Your account</h2>
       {!me ? (
-        <p>
+        <p className="card-description">
           <Link to="/login?next=/dev">Sign in</Link> to use the account shortcuts.
         </p>
       ) : me.user.email_verified ? (
-        <p>{me.user.email} is confirmed.</p>
+        <p className="card-description">{me.user.email} is confirmed.</p>
       ) : (
         <div className="row">
           <span>{me.user.email} is not confirmed yet.</span>
@@ -73,12 +79,16 @@ function Outbox() {
   useEffect(load, [load])
 
   return (
-    <section>
-      <div className="row">
+    <section className="card">
+      <div className="row" style={{ justifyContent: 'space-between' }}>
         <h2>Outbox</h2>
-        <button onClick={load}>Refresh</button>
+        <button className="small" onClick={load}>
+          Refresh
+        </button>
       </div>
-      <p className="muted">The latest 50 emails Kenning sent or would have sent, newest first.</p>
+      <p className="card-description">
+        The latest 50 emails Kenning sent or would have sent, newest first.
+      </p>
       {error && <p className="error">{error}</p>}
       {emails?.length === 0 && <p>No emails yet.</p>}
       {emails?.map((email, i) => (

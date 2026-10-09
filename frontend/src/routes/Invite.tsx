@@ -52,7 +52,11 @@ export default function Invite() {
           This invitation {reason}. Ask {invite.invited_by_name} to send a new one if you still need
           access.
         </p>
-        {me && <Link to="/">Go to Kenning</Link>}
+        {me && (
+          <Link className="button block" to="/">
+            Go to Kenning
+          </Link>
+        )}
       </>
     )
   }
@@ -72,11 +76,11 @@ export default function Invite() {
         {intro}
         <div className="row">
           {invite.account_exists ? (
-            <Link className="button" to={`/login?${query}`}>
+            <Link className="button primary block" to={`/login?${query}`}>
               Sign in to accept
             </Link>
           ) : (
-            <Link className="button" to={`/signup?${query}`}>
+            <Link className="button primary block" to={`/signup?${query}`}>
               Create an account to accept
             </Link>
           )}
@@ -93,7 +97,9 @@ export default function Invite() {
         <p>
           You are signed in as {me.user.email}. Sign out and sign in as {invite.email} to accept.
         </p>
-        <button onClick={() => void logout()}>Sign out</button>
+        <button className="block" onClick={() => void logout()}>
+          Sign out
+        </button>
       </>
     )
   }
@@ -110,7 +116,7 @@ export default function Invite() {
       {heading}
       {intro}
       {error && <p className="error">{error}</p>}
-      <button className="primary" onClick={() => void accept()} disabled={busy}>
+      <button className="primary block" onClick={() => void accept()} disabled={busy}>
         Join {invite.org_name}
       </button>
     </>

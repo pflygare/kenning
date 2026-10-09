@@ -1,3 +1,5 @@
+<img src="frontend/public/logo.svg" width="64" alt="Kenning logo">
+
 # Kenning
 
 *A kenning is an Old Norse figure of speech, like "whale-road" for the sea.*

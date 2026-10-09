@@ -1,7 +1,7 @@
 /** Starts Google sign-in; the server redirects back to `next` afterwards. */
 export default function GoogleButton({ next }: { next: string }) {
   return (
-    <a className="button" href={`/api/auth/google/start?next=${encodeURIComponent(next)}`}>
+    <a className="button block" href={`/api/auth/google/start?next=${encodeURIComponent(next)}`}>
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
         <path
           fill="#FFC107"

@@ -37,7 +37,7 @@ export default function ResetPassword() {
   return (
     <>
       <h1>Choose a new password</h1>
-      <p className="muted">This signs you out everywhere else.</p>
+      <p>This also signs you out on your other devices.</p>
       <form className="form" onSubmit={submit}>
         <label>
           New password <span className="hint">At least 8 characters.</span>
@@ -55,7 +55,7 @@ export default function ResetPassword() {
             {error} <Link to="/forgot-password">Send a new link</Link>
           </p>
         )}
-        <button className="primary" type="submit" disabled={busy}>
+        <button className="primary block" type="submit" disabled={busy}>
           Save password
         </button>
       </form>

@@ -5,6 +5,7 @@ import type { CreateOrgRequest } from '../api/types/CreateOrgRequest'
 import type { Membership } from '../api/types/Membership'
 import { useAuth } from '../auth/context'
 import { useAction } from '../hooks/useAction'
+import Page from '../components/Page'
 import ConfirmEmail from './ConfirmEmail'
 
 export default function NewOrg() {
@@ -29,13 +30,23 @@ export default function NewOrg() {
   }
 
   return (
-    <>
-      <h1>Create an organization</h1>
-      <p>An organization holds your team's pages. You can invite people once it exists.</p>
-      <form className="form" onSubmit={submit}>
+    <Page narrow>
+      <div className="page-header">
+        <div>
+          <h1>Create an organization</h1>
+          <p>An organization holds your team's pages. You can invite people once it exists.</p>
+        </div>
+      </div>
+      <form className="form card" onSubmit={submit}>
         <label>
-          Name
-          <input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
+          Organization name
+          <input
+            required
+            maxLength={100}
+            placeholder="Acme Inc."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </label>
         <label>
           Web address <span className="hint">Optional. Lowercase letters, digits and dashes.</span>
@@ -48,10 +59,12 @@ export default function NewOrg() {
           />
         </label>
         {error && <p className="error">{error}</p>}
-        <button className="primary" type="submit" disabled={busy}>
-          Create organization
-        </button>
+        <div className="row">
+          <button className="primary" type="submit" disabled={busy}>
+            Create organization
+          </button>
+        </div>
       </form>
-    </>
+    </Page>
   )
 }

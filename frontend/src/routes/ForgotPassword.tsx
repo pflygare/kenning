@@ -26,7 +26,7 @@ export default function ForgotPassword() {
           If an account uses {email}, we have sent it a link to choose a new password. The link
           works for one hour.
         </p>
-        <p>
+        <p className="footer">
           <Link to="/login">Back to sign in</Link>
         </p>
       </>
@@ -39,7 +39,7 @@ export default function ForgotPassword() {
       <p>Enter your email and we will send you a link to choose a new password.</p>
       <form className="form" onSubmit={submit}>
         <label>
-          Email
+          Email address
           <input
             type="email"
             autoComplete="email"
@@ -49,10 +49,13 @@ export default function ForgotPassword() {
           />
         </label>
         {error && <p className="error">{error}</p>}
-        <button className="primary" type="submit" disabled={busy}>
+        <button className="primary block" type="submit" disabled={busy}>
           Send reset link
         </button>
       </form>
+      <p className="footer">
+        Remembered it? <Link to="/login">Sign in</Link>
+      </p>
     </>
   )
 }

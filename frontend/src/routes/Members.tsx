@@ -7,6 +7,7 @@ import type { Member } from '../api/types/Member'
 import type { PendingInvite } from '../api/types/PendingInvite'
 import type { Role } from '../api/types/Role'
 import { useAuth } from '../auth/context'
+import Avatar from '../components/Avatar'
 import { useAction } from '../hooks/useAction'
 import { useOrg } from './useOrg'
 
@@ -93,9 +94,17 @@ export default function Members() {
 
   return (
     <>
-      <h1>Members of {org.name}</h1>
+      <div className="page-header">
+        <div>
+          <h1>Members</h1>
+          <p>
+            {members.length} {members.length === 1 ? 'person' : 'people'} in {org.name}.
+          </p>
+        </div>
+      </div>
       {manager && <InviteForm orgSlug={org.slug} ownerRole={org.role === 'owner'} onSent={load} />}
-      {action.error && <p className="error">{action.error}</p>}
+      {action.error && <p className="alert error">{action.error}</p>}
+      <section className="card">
       <table className="table">
         <thead>
           <tr>
@@ -110,10 +119,15 @@ export default function Members() {
             return (
               <tr key={member.user_id}>
                 <td>
-                  {member.name}
-                  {isSelf && ' (you)'}
-                  <br />
-                  <span className="muted">{member.email}</span>
+                  <div className="person">
+                    <Avatar name={member.name} url={member.avatar_url} />
+                    <div>
+                      <div className="person-name">
+                        {member.name} {isSelf && <span className="badge">You</span>}
+                      </div>
+                      <div className="muted">{member.email}</div>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   {canChange(member.role, member.role) ? (
@@ -135,7 +149,7 @@ export default function Members() {
                     ROLE_LABELS[member.role]
                   )}
                 </td>
-                <td>
+                <td className="actions">
                   {canRemove(member.role, isSelf) && (
                     <button
                       className="link danger"
@@ -151,10 +165,14 @@ export default function Members() {
           })}
         </tbody>
       </table>
+      </section>
 
       {manager && invites.length > 0 && (
-        <>
+        <section className="card">
           <h2>Pending invitations</h2>
+          <p className="card-description">
+            These people have been invited but haven't joined yet.
+          </p>
           <table className="table">
             <thead>
               <tr>
@@ -168,13 +186,12 @@ export default function Members() {
               {invites.map((invite) => (
                 <tr key={invite.id}>
                   <td>
-                    {invite.email}
-                    <br />
-                    <span className="muted">Invited by {invite.invited_by_name}</span>
+                    <div className="person-name">{invite.email}</div>
+                    <div className="muted">Invited by {invite.invited_by_name}</div>
                   </td>
                   <td>{ROLE_LABELS[invite.role]}</td>
                   <td>{new Date(invite.expires_at).toLocaleDateString()}</td>
-                  <td>
+                  <td className="actions">
                     <button
                       className="link danger"
                       disabled={action.busy}
@@ -187,7 +204,7 @@ export default function Members() {
               ))}
             </tbody>
           </table>
-        </>
+        </section>
       )}
     </>
   )
@@ -219,27 +236,38 @@ function InviteForm({
   }
 
   return (
-    <form className="row" onSubmit={submit} style={{ marginBottom: '1.5rem' }}>
-      <input
-        type="email"
-        placeholder="name@example.com"
-        aria-label="Email to invite"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <select aria-label="Role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-        {ROLES.filter((r) => ownerRole || r !== 'owner').map((r) => (
-          <option key={r} value={r}>
-            {ROLE_LABELS[r]}
-          </option>
-        ))}
-      </select>
-      <button className="primary" type="submit" disabled={busy}>
-        Invite
-      </button>
-      {error && <p className="error">{error}</p>}
-      {sentTo && !error && <p className="muted">Invitation sent to {sentTo}.</p>}
+    <form className="card" onSubmit={submit}>
+      <h2>Invite people</h2>
+      <p className="card-description">
+        They'll get an email with a link to join, whether or not they have an account yet.
+      </p>
+      <div className="row">
+        <input
+          type="email"
+          placeholder="name@example.com"
+          aria-label="Email to invite"
+          required
+          style={{ flex: '1 1 16rem' }}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <select aria-label="Role" value={role} onChange={(e) => setRole(e.target.value as Role)}>
+          {ROLES.filter((r) => ownerRole || r !== 'owner').map((r) => (
+            <option key={r} value={r}>
+              {ROLE_LABELS[r]}
+            </option>
+          ))}
+        </select>
+        <button className="primary" type="submit" disabled={busy}>
+          Send invite
+        </button>
+      </div>
+      {error && <p className="error" style={{ marginTop: '0.75rem' }}>{error}</p>}
+      {sentTo && !error && (
+        <p className="muted" style={{ margin: '0.75rem 0 0', color: 'var(--success)' }}>
+          Invitation sent to {sentTo}.
+        </p>
+      )}
     </form>
   )
 }

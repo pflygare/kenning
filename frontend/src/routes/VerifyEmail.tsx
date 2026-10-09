@@ -29,16 +29,23 @@ export default function VerifyEmail() {
     return (
       <>
         <h1>Email confirmed</h1>
-        <p>
-          {me ? <Link to="/">Continue to Kenning</Link> : <Link to="/login">Sign in to continue</Link>}
-        </p>
+        <p>Your address is confirmed. You're all set.</p>
+        {me ? (
+          <Link className="button primary block" to="/">
+            Continue to Kenning
+          </Link>
+        ) : (
+          <Link className="button primary block" to="/login">
+            Sign in to continue
+          </Link>
+        )}
       </>
     )
   }
   return (
     <>
       <h1>We could not confirm your email</h1>
-      <p className="error">{state}</p>
+      <p className="alert error">{state}</p>
       <p>
         {me ? <Link to="/">Send a new link</Link> : <Link to="/login">Sign in</Link>}
       </p>

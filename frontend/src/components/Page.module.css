@@ -1,0 +1,16 @@
+.main,
+.narrow {
+  flex: 1;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+.main {
+  max-width: 56rem;
+}
+
+.narrow {
+  max-width: 34rem;
+  padding-top: 3.5rem;
+}
