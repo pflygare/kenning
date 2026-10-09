@@ -1,0 +1,19 @@
+:root {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+}
+
+.placeholder {
+  max-width: 40rem;
+  margin: 6rem auto;
+  padding: 0 1rem;
+}
+
+.status {
+  color: GrayText;
+  font-size: 0.9rem;
+}
