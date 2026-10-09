@@ -40,3 +40,14 @@ pub async fn begin_org(
         .await?;
     Ok(tx)
 }
+
+/// Mark the current transaction as acting for `org_id` (for audit events and
+/// row-level security) without switching role. Use when a transaction that is
+/// not already organization-scoped starts touching one organization.
+pub async fn set_org(conn: &mut sqlx::PgConnection, org_id: Uuid) -> sqlx::Result<()> {
+    sqlx::query("SELECT set_config('app.org_id', $1, true)")
+        .bind(org_id.to_string())
+        .execute(conn)
+        .await?;
+    Ok(())
+}

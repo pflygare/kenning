@@ -14,13 +14,45 @@ export class ApiError extends Error {
 }
 
 /** GET a JSON resource under `/api`. */
-export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
+export function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
+  return request<T>('GET', path, undefined, init)
+}
+
+/** POST a JSON body under `/api`; resolves to the parsed response, or `undefined` for 204. */
+export function apiPost<T = void>(path: string, body: unknown = {}): Promise<T> {
+  return request<T>('POST', path, body)
+}
+
+export function apiPatch<T = void>(path: string, body: unknown): Promise<T> {
+  return request<T>('PATCH', path, body)
+}
+
+export function apiDelete<T = void>(path: string): Promise<T> {
+  return request<T>('DELETE', path)
+}
+
+async function request<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+  init?: RequestInit,
+): Promise<T> {
+  const headers: Record<string, string> = { Accept: 'application/json' }
+  if (method !== 'GET') {
+    // The server rejects writes without a JSON content type (CSRF protection).
+    headers['Content-Type'] = 'application/json'
+  }
   const res = await fetch(`/api${path}`, {
     ...init,
-    headers: { Accept: 'application/json', ...init?.headers },
+    method,
+    headers: { ...headers, ...init?.headers },
+    body: method === 'GET' ? undefined : JSON.stringify(body ?? {}),
   })
   if (!res.ok) {
     throw await toApiError(res)
+  }
+  if (res.status === 204) {
+    return undefined as T
   }
   return (await res.json()) as T
 }
@@ -32,4 +64,9 @@ async function toApiError(res: Response): Promise<ApiError> {
   } catch {
     return new ApiError(res.status, 'unknown', `Request failed (HTTP ${res.status})`)
   }
+}
+
+/** A message fit to show for any thrown value. */
+export function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Something went wrong.'
 }

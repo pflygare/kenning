@@ -1,6 +1,6 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::net::SocketAddr;
 
-use kenning_server::{AppState, Config, db, jobs, router};
+use kenning_server::{AppState, Config, db, jobs, mail, router};
 use tokio::sync::watch;
 use tracing_subscriber::EnvFilter;
 
@@ -19,14 +19,13 @@ async fn main() -> anyhow::Result<()> {
     let pool = db::connect(&config).await?;
     db::migrate(&pool).await?;
 
+    let mailer = mail::Mailer::from_config(&config)?;
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
-    let worker = tokio::spawn(jobs::Worker::new(pool.clone()).run(shutdown_rx));
+    let worker =
+        tokio::spawn(mail::register(jobs::Worker::new(pool.clone()), mailer).run(shutdown_rx));
 
     let addr = SocketAddr::new(config.bind_addr, config.port);
-    let state = AppState {
-        pool,
-        config: Arc::new(config),
-    };
+    let state = AppState::new(pool, config)?;
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("listening on http://{addr}");
     axum::serve(listener, router(state))

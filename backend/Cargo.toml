@@ -5,10 +5,17 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.104"
+argon2 = "0.6.0"
 axum = "0.8.9"
+axum-extra = { version = "0.12.6", features = ["cookie", "typed-header"] }
+base64ct = { version = "1.8.3", features = ["alloc"] }
 chrono = { version = "0.4.45", features = ["serde"] }
+cookie = { version = "0.18.2", features = ["percent-encode"] }
 dotenvy = "0.15.7"
 hex = "0.4.3"
+lettre = { version = "0.11.23", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "ring", "webpki-roots"] }
+openidconnect = "4.0.1"
+rand = "0.9"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 sha2 = "0.11.0"
@@ -19,6 +26,7 @@ tower-http = { version = "0.7.1", features = ["cors", "fs", "trace"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 ts-rs = { version = "12.0.1", features = ["uuid-impl", "chrono-impl", "serde-json-impl"] }
+url = "2.5.8"
 uuid = { version = "1.27.0", features = ["v7", "serde"] }
 
 [dev-dependencies]
