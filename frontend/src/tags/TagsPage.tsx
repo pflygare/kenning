@@ -9,10 +9,9 @@ import type { UpdateTagRequest } from '../api/types/UpdateTagRequest'
 import Popover from '../components/Popover'
 import { useAction } from '../hooks/useAction'
 import { useOrg } from '../routes/useOrg'
-import { TAG_HUES, tagListPath } from './colors'
+import ColorPicker from './ColorPicker'
+import { tagListPath } from './colors'
 import styles from './TagsPage.module.css'
-
-const COLORS = Object.keys(TAG_HUES) as TagColor[]
 
 /** Every tag in the organization: create, rename, recolor, merge and delete. */
 export default function TagsPage() {
@@ -157,39 +156,6 @@ export default function TagsPage() {
         </ul>
       )}
     </>
-  )
-}
-
-function ColorPicker({ value, onChange }: { value: TagColor; onChange: (color: TagColor) => void }) {
-  return (
-    <Popover
-      label={<span className={styles.swatch} style={{ background: TAG_HUES[value] }} />}
-      ariaLabel={`Color: ${value}`}
-      triggerClass={`small ghost ${styles.swatchButton}`}
-      align="left"
-    >
-      {(close) => (
-        <div className={styles.palette} role="radiogroup" aria-label="Tag color">
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              role="radio"
-              aria-checked={c === value}
-              aria-label={c}
-              title={c}
-              className={`${styles.paletteButton} ${c === value ? styles.current : ''}`}
-              onClick={() => {
-                close()
-                onChange(c)
-              }}
-            >
-              <span className={styles.swatch} style={{ background: TAG_HUES[c] }} />
-            </button>
-          ))}
-        </div>
-      )}
-    </Popover>
   )
 }
 

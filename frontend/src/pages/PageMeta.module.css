@@ -79,3 +79,44 @@
 .selected {
   background: var(--surface-muted);
 }
+
+.categoryTrigger {
+  height: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+.categoryTrigger:hover {
+  background: none;
+}
+
+.categoryName {
+  font-weight: 450;
+  opacity: 0.8;
+}
+
+.optional {
+  display: inline-flex;
+  align-items: center;
+  height: 1.6rem;
+  padding: 0 0.5rem;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.optional:hover {
+  background: var(--surface-muted);
+}
+
+.tick {
+  margin-left: auto;
+  color: var(--brand);
+}
+
+.pickerLabel {
+  white-space: nowrap;
+}

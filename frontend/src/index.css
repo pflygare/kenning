@@ -618,6 +618,18 @@ a.tag:hover {
 .tag.teal { --tag: #0d9488; }
 .tag.pink { --tag: #db2777; }
 
+/* Category values: squarer than tags so the two read differently. */
+.tag.value {
+  border-radius: 5px;
+}
+
+/* A required category with no value yet. */
+.tag.missing {
+  --tag: #d97706;
+  border: 1px dashed color-mix(in srgb, var(--tag) 60%, transparent);
+  background: none;
+}
+
 .tag button {
   width: 1rem;
   height: 1rem;

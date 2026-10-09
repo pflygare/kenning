@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { apiGet, apiPut, errorMessage } from '../api/client'
+import type { PageCategory } from '../api/types/PageCategory'
 import type { PageDetail } from '../api/types/PageDetail'
+import type { SetPageCategoryRequest } from '../api/types/SetPageCategoryRequest'
 import type { SetPageTagsRequest } from '../api/types/SetPageTagsRequest'
 import type { SetPageTopicsRequest } from '../api/types/SetPageTopicsRequest'
 import type { Tag } from '../api/types/Tag'
@@ -13,7 +15,7 @@ import { useTopics } from '../topics/context'
 import { flatten, topicPath } from '../topics/tree'
 import styles from './PageMeta.module.css'
 
-/** The page's topics and tags, editable in place. Changes apply at once, not on publish. */
+/** The page's topics, tags and category values, editable in place. Changes apply at once, not on publish. */
 export default function PageMeta({
   org,
   api,
@@ -22,12 +24,13 @@ export default function PageMeta({
 }: {
   org: string
   api: string
-  page: { topics: TopicRef[]; tags: TagRef[] }
+  page: { topics: TopicRef[]; tags: TagRef[]; categories: PageCategory[] }
   onChange?: (page: PageDetail) => void
 }) {
   const topicsCtx = useTopics()
   const [topics, setTopics] = useState(page.topics)
   const [tags, setTags] = useState(page.tags)
+  const [categories, setCategories] = useState(page.categories)
   const [error, setError] = useState<string | null>(null)
 
   const saveTopics = async (ids: string[]) => {
@@ -53,6 +56,18 @@ export default function PageMeta({
       const body: SetPageTagsRequest = { names }
       const updated = await apiPut<PageDetail>(`${api}/tags`, body)
       setTags(updated.tags)
+      setError(null)
+      onChange?.(updated)
+    } catch (err) {
+      setError(errorMessage(err))
+    }
+  }
+
+  const saveValue = async (categoryId: string, valueId: string | null) => {
+    try {
+      const body: SetPageCategoryRequest = { category_id: categoryId, value_id: valueId }
+      const updated = await apiPut<PageDetail>(`${api}/categories`, body)
+      setCategories(updated.categories)
       setError(null)
       onChange?.(updated)
     } catch (err) {
@@ -118,8 +133,81 @@ export default function PageMeta({
           onAdd={(name) => saveTags([...tags.map((t) => t.name), name])}
         />
       </div>
+      {categories.length > 0 && (
+        <div className="chips" aria-label="Categories">
+          {categories.map((category) => (
+            <CategoryPicker
+              key={category.category_id}
+              category={category}
+              onPick={(valueId) => void saveValue(category.category_id, valueId)}
+            />
+          ))}
+        </div>
+      )}
       {error && <p className="alert error">{error}</p>}
     </div>
+  )
+}
+
+/** "Information class: Internal"; opens the category's values. Required and unset shows as a warning. */
+function CategoryPicker({
+  category,
+  onPick,
+}: {
+  category: PageCategory
+  onPick: (valueId: string | null) => void
+}) {
+  const { value } = category
+  const label = value ? (
+    <span className={`tag value ${value.color}`}>
+      <span className={styles.categoryName}>{category.name}:</span> {value.name}
+    </span>
+  ) : category.required ? (
+    <span className="tag value missing" title="Required before publishing">
+      {category.name}: choose
+    </span>
+  ) : (
+    <span className={styles.optional}>+ {category.name}</span>
+  )
+  return (
+    <Popover
+      label={label}
+      ariaLabel={`${category.name}: ${value?.name ?? 'not set'}`}
+      triggerClass={`small ghost ${styles.categoryTrigger}`}
+      align="left"
+    >
+      {(close) => (
+        <div role="menu" aria-label={category.name}>
+          <div className={`menu-label ${styles.pickerLabel}`}>
+            {category.name}
+            {category.required && ' · required'}
+          </div>
+          {category.options.map((option) => (
+            <button
+              key={option.id}
+              className="menu-item"
+              role="menuitemradio"
+              aria-checked={option.id === value?.id}
+              onClick={() => {
+                close()
+                if (option.id !== value?.id) onPick(option.id)
+              }}
+            >
+              <span className={`tag value ${option.color}`}>{option.name}</span>
+              {option.id === value?.id && <span className={styles.tick}>✓</span>}
+            </button>
+          ))}
+          {value && (
+            <>
+              <div className="menu-separator" />
+              <button className="menu-item" role="menuitem" onClick={() => (close(), onPick(null))}>
+                Clear
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </Popover>
   )
 }
 

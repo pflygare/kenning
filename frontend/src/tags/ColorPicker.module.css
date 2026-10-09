@@ -1,0 +1,35 @@
+.swatchButton {
+  width: 2rem;
+  padding: 0;
+}
+
+.swatch {
+  display: inline-block;
+  flex: none;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(4, 2.25rem);
+  gap: 0.25rem;
+}
+
+.paletteButton {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 2px solid transparent;
+  box-shadow: none;
+  background: none;
+}
+
+.paletteButton:hover {
+  background: var(--surface-muted);
+}
+
+.current {
+  border-color: var(--brand);
+}

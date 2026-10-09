@@ -42,6 +42,10 @@ export default function OrgLayout() {
             <TagIcon />
             Tags
           </NavLink>
+          <NavLink to={`${home}/categories`} className={link}>
+            <ListIcon />
+            Categories
+          </NavLink>
           <div className={`${styles.section} ${styles.sectionRow}`}>
             Topics
             <button
@@ -92,6 +96,15 @@ function TagIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" />
       <circle cx="7.5" cy="7.5" r="1.5" />
+    </svg>
+  )
+}
+
+function ListIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M7 9h2M7 13h2M7 17h2M12 9h5M12 13h5M12 17h5" />
     </svg>
   )
 }
