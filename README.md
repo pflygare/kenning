@@ -10,6 +10,7 @@ A team knowledge base in the spirit of [Slab](https://slab.com): a calm place to
 
 - **Pages**: rich documents written in a fast, distraction-free markdown editor, with revision history.
 - **Topics**: hierarchical collections that organize pages. A page can live in more than one topic.
+- **Categories**: fixed choices such as an information class (Open, Internal, Restricted), required on every page or on pages in chosen topics.
 - **Search**: instant full-text search across every page and topic.
 - **Collaboration** (later): comments, mentions, and real-time co-editing.
 
@@ -61,6 +62,8 @@ In production the backend serves the built frontend too: run `npm run build` and
 - **Accounts:** people sign up with email and password or with Google; a Google sign-in with the same verified address joins the existing account. Sessions are random tokens in an HttpOnly cookie (`kenning_session`), stored hashed. Requests that change data must be JSON, which, with the SameSite cookie, blocks cross-site forgery.
 - **Organizations:** anyone with a confirmed email can create one and becomes its owner. Owners and admins invite people by email, whether or not they have an account yet; only owners can make owners, and the last owner cannot leave or be demoted.
 - **Pages:** each page has a current revision (what editors work on) and a published revision (what readers see); when they differ, the page has an unpublished draft. Saves by the same person within 10 minutes update one revision instead of piling up new ones, and a save based on an outdated revision is refused so two editors cannot silently overwrite each other.
+- **Topics and tags:** topics form a tree (`parent_id`, with `position` ordering siblings); a page can sit in several topics and carry up to 20 tags. Tags are unique per organization by slug, so names differing only in case or punctuation are one tag. Neither is versioned with page content: changes apply at once and go to the audit log.
+- **Categories:** a category has ordered values, and a page has at most one value per category. Owners and admins mark a category required everywhere or in topics (which covers their sub-topics); `kenning_required_categories(page)` resolves that, and publishing a page missing a required value is refused with `missing_categories`. A value in use can't be deleted.
 - **Errors:** handlers return `AppResult<T>`; every error becomes `{"error": {"code", "message"}}` with a matching status.
 - **Audit log:** `audit::record` appends to `audit_events` inside the same transaction as the change. Events are hash-chained per organization and the table rejects UPDATE and DELETE.
 - **Jobs:** `jobs::enqueue` queues work in Postgres; `jobs::Worker` runs it with retries and backoff. Any number of servers can share the queue.

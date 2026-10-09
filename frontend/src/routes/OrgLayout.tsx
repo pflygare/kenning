@@ -1,5 +1,10 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useParams } from 'react-router'
 import { useAuth } from '../auth/context'
+import { TopicsContext } from '../topics/context'
+import NewTopicForm from '../topics/NewTopicForm'
+import TopicTree from '../topics/TopicTree'
+import { useTopicList } from '../topics/useTopicList'
 import NotFound from './NotFound'
 import styles from './OrgLayout.module.css'
 
@@ -9,36 +14,72 @@ export default function OrgLayout() {
   const { me } = useAuth()
   const { pathname } = useLocation()
   const org = me?.orgs.find((o) => o.slug === slug)
+  const context = useTopicList(slug ?? '')
+  const { topics } = context
+  const [adding, setAdding] = useState(false)
+
   if (!org) {
     return <NotFound />
   }
   const link = ({ isActive }: { isActive: boolean }) =>
     isActive ? `${styles.link} ${styles.active}` : styles.link
+  const home = `/${org.slug}`
+  const onPages = pathname === home || pathname.startsWith(`${home}/p/`)
 
   return (
-    <div className={styles.frame}>
-      <nav className={styles.sidebar} aria-label={org.name}>
-        <div className={styles.org}>
-          <span className={styles.orgIcon}>{org.name[0]?.toUpperCase()}</span>
-          <span className={styles.orgName}>{org.name}</span>
-        </div>
-        <NavLink
-          to={`/${org.slug}`}
-          className={() => link({ isActive: !pathname.includes('/settings/') })}
-        >
-          <HomeIcon />
-          Pages
-        </NavLink>
-        <div className={styles.section}>Settings</div>
-        <NavLink to={`/${org.slug}/settings/members`} className={link}>
-          <PeopleIcon />
-          Members
-        </NavLink>
-      </nav>
-      <main className={styles.content}>
-        <Outlet context={org} />
-      </main>
-    </div>
+    <TopicsContext.Provider value={context}>
+      <div className={styles.frame}>
+        <nav className={styles.sidebar} aria-label={org.name}>
+          <div className={styles.org}>
+            <span className={styles.orgIcon}>{org.name[0]?.toUpperCase()}</span>
+            <span className={styles.orgName}>{org.name}</span>
+          </div>
+          <NavLink to={home} className={() => link({ isActive: onPages })}>
+            <HomeIcon />
+            Pages
+          </NavLink>
+          <NavLink to={`${home}/tags`} className={link}>
+            <TagIcon />
+            Tags
+          </NavLink>
+          <NavLink to={`${home}/categories`} className={link}>
+            <ListIcon />
+            Categories
+          </NavLink>
+          <div className={`${styles.section} ${styles.sectionRow}`}>
+            Topics
+            <button
+              type="button"
+              className={styles.add}
+              aria-label="New topic"
+              title="New topic"
+              onClick={() => setAdding(true)}
+            >
+              +
+            </button>
+          </div>
+          <div className={styles.topics}>
+            {topics && <TopicTree org={org.slug} topics={topics} />}
+            {adding && (
+              <NewTopicForm org={org.slug} parentId={null} compact onClose={() => setAdding(false)} />
+            )}
+            {topics?.length === 0 && !adding && (
+              <button type="button" className={styles.hint} onClick={() => setAdding(true)}>
+                Group pages into topics
+              </button>
+            )}
+          </div>
+          <div className={styles.section}>Settings</div>
+          <NavLink to={`/${org.slug}/settings/members`} className={link}>
+            <PeopleIcon />
+            Members
+          </NavLink>
+        </nav>
+        <main className={styles.content}>
+          <Outlet context={org} />
+        </main>
+      </div>
+    </TopicsContext.Provider>
   )
 }
 
@@ -46,6 +87,24 @@ function HomeIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />
+    </svg>
+  )
+}
+
+function TagIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z" />
+      <circle cx="7.5" cy="7.5" r="1.5" />
+    </svg>
+  )
+}
+
+function ListIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M7 9h2M7 13h2M7 17h2M12 9h5M12 13h5M12 17h5" />
     </svg>
   )
 }

@@ -10,14 +10,17 @@ use chrono::{DateTime, Duration, Utc};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sqlx::{FromRow, PgConnection};
+use sqlx::{FromRow, PgConnection, types::Json};
 use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::{
     AppError, AppResult,
     audit::{self, Event},
+    categories::{self, PageCategory, PageValue},
     orgs,
+    tags::{self, TagRef},
+    topics::{self, TopicRef},
 };
 
 /// Saves by the same author within this long update one revision instead of
@@ -40,6 +43,23 @@ pub struct PageSummary {
     pub has_draft: bool,
     pub updated_at: DateTime<Utc>,
     pub updated_by_name: String,
+    #[ts(as = "Vec<TagRef>")]
+    pub tags: Json<Vec<TagRef>>,
+    /// The page's category values.
+    #[ts(as = "Vec<PageValue>")]
+    pub values: Json<Vec<PageValue>>,
+    /// Whether a required category has no value, which blocks publishing.
+    pub missing_required: bool,
+}
+
+/// Which pages a list shows; every filter given must match.
+#[derive(Debug, Default, Deserialize)]
+pub struct ListFilter {
+    /// A tag's slug.
+    pub tag: Option<String>,
+    pub topic_id: Option<Uuid>,
+    /// A category value's id.
+    pub value: Option<Uuid>,
 }
 
 /// One version of a page's content.
@@ -66,6 +86,9 @@ pub struct PageDetail {
     /// Unpublished changes, when there are any.
     pub draft: Option<Version>,
     pub created_at: DateTime<Utc>,
+    pub topics: Vec<TopicRef>,
+    pub tags: Vec<TagRef>,
+    pub categories: Vec<PageCategory>,
 }
 
 /// The result of saving a draft.
@@ -135,7 +158,7 @@ pub fn slug_for(title: &str) -> String {
     }
 }
 
-fn new_short_id() -> String {
+pub fn new_short_id() -> String {
     const ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyz0123456789";
     let mut rng = rand::rng();
     (0..10)
@@ -151,22 +174,48 @@ fn stale() -> AppError {
     )
 }
 
-/// Pages in the organization, most recently changed first.
-pub async fn list(conn: &mut PgConnection) -> sqlx::Result<Vec<PageSummary>> {
+/// Pages in the organization: in a topic by title, otherwise most recently changed first.
+pub async fn list(conn: &mut PgConnection, filter: &ListFilter) -> sqlx::Result<Vec<PageSummary>> {
     sqlx::query_as(
         "SELECT p.short_id, p.slug,
                 coalesce(pub.title, cur.title) AS title,
                 p.published_revision_id IS NOT NULL AS published,
                 p.published_revision_id IS DISTINCT FROM p.current_revision_id AS has_draft,
-                p.updated_at, u.name AS updated_by_name
+                p.updated_at, u.name AS updated_by_name,
+                coalesce((SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'slug', t.slug,
+                                                            'color', t.color) ORDER BY lower(t.name))
+                          FROM page_tags pt JOIN tags t ON t.id = pt.tag_id WHERE pt.page_id = p.id),
+                         '[]') AS tags,
+                coalesce((SELECT json_agg(json_build_object('category', c.name, 'id', v.id, 'name', v.name,
+                                                            'color', v.color) ORDER BY lower(c.name))
+                          FROM page_categories pc
+                          JOIN categories c ON c.id = pc.category_id
+                          JOIN category_values v ON v.id = pc.value_id
+                          WHERE pc.page_id = p.id),
+                         '[]') AS values,
+                EXISTS (SELECT 1 FROM kenning_required_categories(p.id) r
+                        WHERE NOT EXISTS (SELECT 1 FROM page_categories pc
+                                          WHERE pc.page_id = p.id AND pc.category_id = r.category_id))
+                    AS missing_required
          FROM pages p
          JOIN page_revisions cur ON cur.id = p.current_revision_id
          LEFT JOIN page_revisions pub ON pub.id = p.published_revision_id
          JOIN users u ON u.id = cur.author_id
          WHERE p.archived_at IS NULL
-         ORDER BY p.updated_at DESC
+           AND ($1::text IS NULL OR EXISTS (
+                 SELECT 1 FROM page_tags pt JOIN tags t ON t.id = pt.tag_id
+                 WHERE pt.page_id = p.id AND t.slug = $1))
+           AND ($2::uuid IS NULL OR EXISTS (
+                 SELECT 1 FROM page_topics pt WHERE pt.page_id = p.id AND pt.topic_id = $2))
+           AND ($3::uuid IS NULL OR EXISTS (
+                 SELECT 1 FROM page_categories pc WHERE pc.page_id = p.id AND pc.value_id = $3))
+         ORDER BY CASE WHEN $2::uuid IS NOT NULL THEN lower(coalesce(pub.title, cur.title)) END,
+                  p.updated_at DESC
          LIMIT 200",
     )
+    .bind(&filter.tag)
+    .bind(filter.topic_id)
+    .bind(filter.value)
     .fetch_all(conn)
     .await
 }
@@ -231,6 +280,11 @@ struct PageRow {
     created_at: DateTime<Utc>,
 }
 
+/// The page's id, for changes that don't touch its content.
+pub async fn id_of(conn: &mut PgConnection, short_id: &str) -> AppResult<Uuid> {
+    Ok(find(conn, short_id, true).await?.id)
+}
+
 async fn find(conn: &mut PgConnection, short_id: &str, lock: bool) -> AppResult<PageRow> {
     let sql = if lock {
         "SELECT p.id, p.short_id, p.slug, p.current_revision_id, p.published_revision_id,
@@ -280,6 +334,9 @@ pub async fn detail(conn: &mut PgConnection, short_id: &str) -> AppResult<PageDe
         published_by_name: page.published_by_name,
         draft,
         created_at: page.created_at,
+        topics: topics::for_page(conn, page.id).await?,
+        tags: tags::for_page(conn, page.id).await?,
+        categories: categories::for_page(conn, page.id).await?,
     })
 }
 
@@ -359,6 +416,14 @@ pub async fn publish(
     }
     if page.published_revision_id == Some(revision_id) {
         return Ok(());
+    }
+    let missing = categories::missing_for_page(conn, page.id).await?;
+    if !missing.is_empty() {
+        return Err(AppError::coded(
+            StatusCode::CONFLICT,
+            "missing_categories",
+            format!("Choose {} before publishing.", missing.join(" and ")),
+        ));
     }
     let title: String = sqlx::query_scalar("SELECT title FROM page_revisions WHERE id = $1")
         .bind(revision_id)

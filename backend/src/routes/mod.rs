@@ -5,10 +5,13 @@ use ts_rs::TS;
 use crate::{AppError, AppResult, AppState};
 
 mod auth;
+mod categories;
 mod dev;
 mod invites;
 mod orgs;
 mod pages;
+mod tags;
+mod topics;
 
 /// Routes mounted under `/api`.
 pub fn api() -> Router<AppState> {
@@ -19,6 +22,9 @@ pub fn api() -> Router<AppState> {
         .merge(invites::routes())
         .merge(dev::routes())
         .merge(pages::routes())
+        .merge(topics::routes())
+        .merge(tags::routes())
+        .merge(categories::routes())
         .fallback(|| async { AppError::NotFound })
 }
 

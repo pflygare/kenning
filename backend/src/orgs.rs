@@ -178,6 +178,19 @@ impl FromRequestParts<AppState> for OrgContext {
 }
 
 impl OrgContext {
+    /// Owners and admins only; `what` finishes "Only owners and admins can …".
+    pub fn require_admin(&self, what: &str) -> AppResult<()> {
+        if self.role.manages_members() {
+            Ok(())
+        } else {
+            Err(AppError::coded(
+                StatusCode::FORBIDDEN,
+                "forbidden",
+                format!("Only owners and admins can {what}."),
+            ))
+        }
+    }
+
     pub fn require_manager(&self) -> AppResult<()> {
         if self.role.manages_members() {
             Ok(())

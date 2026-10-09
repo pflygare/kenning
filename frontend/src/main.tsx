@@ -15,6 +15,9 @@ import Members from './routes/Members.tsx'
 import NewOrg from './routes/NewOrg.tsx'
 import NotFound from './routes/NotFound.tsx'
 import PageList from './pages/PageList.tsx'
+import TagsPage from './tags/TagsPage.tsx'
+import CategoriesPage from './categories/CategoriesPage.tsx'
+import TopicView from './topics/TopicView.tsx'
 import OrgLayout from './routes/OrgLayout.tsx'
 import ResetPassword from './routes/ResetPassword.tsx'
 import Signup from './routes/Signup.tsx'
@@ -63,6 +66,9 @@ const router = createBrowserRouter([
           { path: 'p/:page', lazy: () => component(import('./pages/PageView.tsx')) },
           { path: 'p/:page/edit', lazy: () => component(import('./pages/PageEdit.tsx')) },
           { path: 'p/:page/compare', lazy: () => component(import('./pages/PageCompare.tsx')) },
+          { path: 't/:topic', element: <TopicView /> },
+          { path: 'tags', element: <TagsPage /> },
+          { path: 'categories', element: <CategoriesPage /> },
           { path: 'settings/members', element: <Members /> },
         ],
       },

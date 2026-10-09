@@ -1,0 +1,154 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.form h2 {
+  margin: 0;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 550;
+}
+
+.form textarea {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.form textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: var(--focus);
+}
+
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.category p {
+  margin: 0;
+}
+
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.heading h2 {
+  margin: 0;
+}
+
+.heading .card-description,
+.heading p {
+  margin: 0.25rem 0 0;
+}
+
+.requirement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 400;
+}
+
+.requirement select {
+  width: auto;
+  height: 2rem;
+  font-size: 0.875rem;
+}
+
+.topicChip {
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: none;
+  color: var(--text);
+}
+
+.check {
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.check input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.empty {
+  margin: 0.5rem 0.625rem;
+  font-size: 0.85rem;
+  white-space: normal;
+}
+
+.missing {
+  margin: 0;
+  color: #b45309;
+  font-size: 0.875rem;
+  font-weight: 550;
+}
+
+.values {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.value {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.count {
+  margin-left: auto;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.addValue {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.addValue input {
+  width: 14rem;
+  height: 2rem;
+  font-size: 0.875rem;
+}
+
+.rename {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.rename input {
+  width: 14rem;
+  height: 2rem;
+}
