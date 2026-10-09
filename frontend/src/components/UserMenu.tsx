@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { User } from '../api/types/User'
 import { useAuth } from '../auth/context'
+import { getTheme, setTheme, type Theme } from '../theme'
 import Avatar from './Avatar'
 import styles from './UserMenu.module.css'
 
 export default function UserMenu({ user }: { user: User }) {
   const { logout } = useAuth()
   const [open, setOpen] = useState(false)
+  const [theme, setThemeState] = useState<Theme>(getTheme)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -41,6 +43,23 @@ export default function UserMenu({ user }: { user: User }) {
             <div className={styles.name}>{user.name}</div>
             <div className="muted">{user.email}</div>
           </div>
+          <div className={styles.section}>Theme</div>
+          <div className={styles.themes} role="group" aria-label="Theme">
+            {(['system', 'light', 'dark'] as const).map((option) => (
+              <button
+                key={option}
+                className={option === theme ? styles.selected : undefined}
+                aria-pressed={option === theme}
+                onClick={() => {
+                  setTheme(option)
+                  setThemeState(option)
+                }}
+              >
+                {option[0].toUpperCase() + option.slice(1)}
+              </button>
+            ))}
+          </div>
+          <hr className={styles.rule} />
           {/* Protected pages send you to the login page on their own. */}
           <button className={styles.item} role="menuitem" onClick={() => void logout()}>
             Sign out
