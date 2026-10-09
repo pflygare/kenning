@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useParams } from 'react-router'
+import { NavLink, Outlet, useLocation, useParams } from 'react-router'
 import { useAuth } from '../auth/context'
 import NotFound from './NotFound'
 import styles from './OrgLayout.module.css'
@@ -7,6 +7,7 @@ import styles from './OrgLayout.module.css'
 export default function OrgLayout() {
   const { org: slug } = useParams()
   const { me } = useAuth()
+  const { pathname } = useLocation()
   const org = me?.orgs.find((o) => o.slug === slug)
   if (!org) {
     return <NotFound />
@@ -21,9 +22,12 @@ export default function OrgLayout() {
           <span className={styles.orgIcon}>{org.name[0]?.toUpperCase()}</span>
           <span className={styles.orgName}>{org.name}</span>
         </div>
-        <NavLink to={`/${org.slug}`} end className={link}>
+        <NavLink
+          to={`/${org.slug}`}
+          className={() => link({ isActive: !pathname.includes('/settings/') })}
+        >
           <HomeIcon />
-          Home
+          Pages
         </NavLink>
         <div className={styles.section}>Settings</div>
         <NavLink to={`/${org.slug}/settings/members`} className={link}>

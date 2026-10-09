@@ -113,6 +113,10 @@ impl Browser {
         self.request(Method::POST, uri, Some(body)).await
     }
 
+    pub async fn put(&mut self, uri: &str, body: Value) -> (StatusCode, Value) {
+        self.request(Method::PUT, uri, Some(body)).await
+    }
+
     pub async fn patch(&mut self, uri: &str, body: Value) -> (StatusCode, Value) {
         self.request(Method::PATCH, uri, Some(body)).await
     }
