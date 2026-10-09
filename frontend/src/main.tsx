@@ -14,11 +14,15 @@ import Login from './routes/Login.tsx'
 import Members from './routes/Members.tsx'
 import NewOrg from './routes/NewOrg.tsx'
 import NotFound from './routes/NotFound.tsx'
-import OrgHome from './routes/OrgHome.tsx'
+import PageList from './pages/PageList.tsx'
 import OrgLayout from './routes/OrgLayout.tsx'
 import ResetPassword from './routes/ResetPassword.tsx'
 import Signup from './routes/Signup.tsx'
 import VerifyEmail from './routes/VerifyEmail.tsx'
+
+function component(module: Promise<{ default: React.ComponentType }>) {
+  return module.then((m) => ({ Component: m.default }))
+}
 
 const router = createBrowserRouter([
   {
@@ -54,7 +58,11 @@ const router = createBrowserRouter([
           </RequireAuth>
         ),
         children: [
-          { index: true, element: <OrgHome /> },
+          { index: true, element: <PageList /> },
+          // The editor is large, so page screens load on first visit.
+          { path: 'p/:page', lazy: () => component(import('./pages/PageView.tsx')) },
+          { path: 'p/:page/edit', lazy: () => component(import('./pages/PageEdit.tsx')) },
+          { path: 'p/:page/compare', lazy: () => component(import('./pages/PageCompare.tsx')) },
           { path: 'settings/members', element: <Members /> },
         ],
       },

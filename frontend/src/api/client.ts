@@ -23,6 +23,10 @@ export function apiPost<T = void>(path: string, body: unknown = {}): Promise<T> 
   return request<T>('POST', path, body)
 }
 
+export function apiPut<T = void>(path: string, body: unknown): Promise<T> {
+  return request<T>('PUT', path, body)
+}
+
 export function apiPatch<T = void>(path: string, body: unknown): Promise<T> {
   return request<T>('PATCH', path, body)
 }

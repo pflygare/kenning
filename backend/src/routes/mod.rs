@@ -8,6 +8,7 @@ mod auth;
 mod dev;
 mod invites;
 mod orgs;
+mod pages;
 
 /// Routes mounted under `/api`.
 pub fn api() -> Router<AppState> {
@@ -17,6 +18,7 @@ pub fn api() -> Router<AppState> {
         .merge(orgs::routes())
         .merge(invites::routes())
         .merge(dev::routes())
+        .merge(pages::routes())
         .fallback(|| async { AppError::NotFound })
 }
 

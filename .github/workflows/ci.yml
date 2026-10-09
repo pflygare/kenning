@@ -13,7 +13,8 @@ jobs:
         working-directory: backend
     services:
       postgres:
-        image: postgres:17
+        # Docker Hub rate-limits shared runners; this is the same official image.
+        image: public.ecr.aws/docker/library/postgres:17
         env:
           POSTGRES_USER: kenning
           POSTGRES_PASSWORD: kenning

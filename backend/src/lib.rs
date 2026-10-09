@@ -11,6 +11,7 @@ pub mod invites;
 pub mod jobs;
 pub mod mail;
 pub mod orgs;
+pub mod pages;
 pub mod routes;
 pub mod tokens;
 
