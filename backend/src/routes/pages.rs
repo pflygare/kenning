@@ -1,6 +1,6 @@
 use axum::{
     Json, Router,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     routing::{get, post, put},
 };
@@ -10,8 +10,8 @@ use crate::{
     AppResult, AppState, db,
     orgs::OrgContext,
     pages::{
-        self, CreatePageRequest, PageDetail, PageSummary, PublishRequest, SaveDraftRequest,
-        SavedDraft,
+        self, CreatePageRequest, ListFilter, PageDetail, PageSummary, PublishRequest,
+        SaveDraftRequest, SavedDraft,
     },
 };
 
@@ -28,13 +28,17 @@ pub fn routes() -> Router<AppState> {
 }
 
 #[derive(Deserialize)]
-struct PagePath {
-    page: String,
+pub(super) struct PagePath {
+    pub page: String,
 }
 
-async fn list(State(state): State<AppState>, ctx: OrgContext) -> AppResult<Json<Vec<PageSummary>>> {
+async fn list(
+    State(state): State<AppState>,
+    ctx: OrgContext,
+    Query(filter): Query<ListFilter>,
+) -> AppResult<Json<Vec<PageSummary>>> {
     let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
-    let pages = pages::list(&mut tx).await?;
+    let pages = pages::list(&mut tx, &filter).await?;
     tx.commit().await?;
     Ok(Json(pages))
 }

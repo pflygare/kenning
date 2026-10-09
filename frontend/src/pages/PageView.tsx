@@ -6,6 +6,7 @@ import type { PublishRequest } from '../api/types/PublishRequest'
 import { useAction } from '../hooks/useAction'
 import { pagePath, timeAgo } from './format'
 import MarkdownView from './MarkdownView'
+import PageMeta from './PageMeta'
 import styles from './PageView.module.css'
 import { usePage } from './usePage'
 
@@ -113,6 +114,7 @@ export default function PageView() {
           ? `Published by ${page.published_by_name} · ${timeAgo(page.published_at!)}`
           : `Started by ${shown.author_name} · ${timeAgo(page.created_at)}`}
       </p>
+      <PageMeta org={org.slug} api={api} page={page} onChange={setPage} />
 
       {shown.body_md.trim() ? (
         <MarkdownView markdown={shown.body_md} />

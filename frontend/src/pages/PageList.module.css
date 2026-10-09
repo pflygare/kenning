@@ -4,17 +4,37 @@
   padding: 0.375rem;
 }
 
-.item {
+.row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 0.875rem;
+  padding: 0 0.875rem;
   border-radius: var(--radius);
+}
+
+.row:hover {
+  background: var(--surface-muted);
+}
+
+.item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
   color: var(--text);
 }
 
+/* The whole row opens the page; tag links sit above this. */
+.item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
 .item:hover {
-  background: var(--surface-muted);
   text-decoration: none;
 }
 
@@ -25,7 +45,37 @@
   white-space: nowrap;
 }
 
+.tags {
+  position: relative;
+  z-index: 1;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
 .meta {
-  margin-left: auto;
   white-space: nowrap;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 720px) {
+  .tags {
+    display: none;
+  }
+}
+
+.clear {
+  margin-left: 0.15rem;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.clear:hover {
+  opacity: 1;
+  text-decoration: none;
 }

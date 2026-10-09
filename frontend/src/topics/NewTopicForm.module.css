@@ -1,0 +1,32 @@
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.form input {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.form :global(.alert) {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.compact {
+  padding: 0.125rem 0.25rem;
+}
+
+.compact input {
+  width: 100%;
+  height: 2rem;
+  padding: 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.compact :global(.alert) {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+}

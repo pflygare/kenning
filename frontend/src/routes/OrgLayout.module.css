@@ -51,6 +51,51 @@
   color: var(--text-muted);
 }
 
+.sectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.add {
+  width: 1.375rem;
+  height: 1.375rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.add:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.topics {
+  display: flex;
+  flex-direction: column;
+}
+
+.hint {
+  justify-content: flex-start;
+  height: auto;
+  padding: 0.3rem 0.625rem;
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 450;
+}
+
+.hint:hover {
+  color: var(--brand);
+}
+
 .link {
   display: flex;
   align-items: center;
@@ -96,7 +141,8 @@
   }
 
   .org,
-  .section {
+  .section,
+  .topics {
     display: none;
   }
 

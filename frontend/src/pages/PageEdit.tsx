@@ -9,6 +9,7 @@ import type { SavedDraft } from '../api/types/SavedDraft'
 import { useContextMenu, useSlashMenu } from './EditorMenus'
 import { extensions } from './editorExtensions'
 import { pagePath } from './format'
+import PageMeta from './PageMeta'
 import styles from './PageEdit.module.css'
 import Toolbar from './Toolbar'
 import { usePage } from './usePage'
@@ -186,6 +187,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
           }
         }}
       />
+      <PageMeta org={orgSlug} api={api} page={page} />
       {editor && <Toolbar editor={editor} />}
       <div
         onKeyDownCapture={slashMenu.onKeyDown}
