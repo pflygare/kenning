@@ -5,6 +5,7 @@ import type { CreateOrgRequest } from '../api/types/CreateOrgRequest'
 import type { Membership } from '../api/types/Membership'
 import { useAuth } from '../auth/context'
 import { useAction } from '../hooks/useAction'
+import ConfirmEmail from './ConfirmEmail'
 
 export default function NewOrg() {
   const { me, refresh } = useAuth()
@@ -12,6 +13,10 @@ export default function NewOrg() {
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const { busy, error, run } = useAction()
+
+  if (!me?.user.email_verified) {
+    return <ConfirmEmail />
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -27,9 +32,6 @@ export default function NewOrg() {
     <>
       <h1>Create an organization</h1>
       <p>An organization holds your team's pages. You can invite people once it exists.</p>
-      {!me?.user.email_verified && (
-        <p className="notice">Confirm your email address first, using the link we sent you.</p>
-      )}
       <form className="form" onSubmit={submit}>
         <label>
           Name
@@ -46,7 +48,7 @@ export default function NewOrg() {
           />
         </label>
         {error && <p className="error">{error}</p>}
-        <button className="primary" type="submit" disabled={busy || !me?.user.email_verified}>
+        <button className="primary" type="submit" disabled={busy}>
           Create organization
         </button>
       </form>

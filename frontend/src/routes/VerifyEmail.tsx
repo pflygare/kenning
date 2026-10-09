@@ -40,7 +40,7 @@ export default function VerifyEmail() {
       <h1>We could not confirm your email</h1>
       <p className="error">{state}</p>
       <p>
-        {me ? 'Use the banner at the top of the page to send a new link.' : <Link to="/login">Sign in</Link>}
+        {me ? <Link to="/">Send a new link</Link> : <Link to="/login">Sign in</Link>}
       </p>
     </>
   )

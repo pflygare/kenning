@@ -1,5 +1,6 @@
 import { Link, Navigate } from 'react-router'
 import { useAuth } from '../auth/context'
+import ConfirmEmail from './ConfirmEmail'
 
 export default function Home() {
   const { me } = useAuth()
@@ -17,6 +18,10 @@ export default function Home() {
         </div>
       </>
     )
+  }
+
+  if (!me.user.email_verified) {
+    return <ConfirmEmail />
   }
 
   if (me.orgs.length === 1) {

@@ -1,7 +1,5 @@
 import { Link, Outlet, useNavigate, useParams } from 'react-router'
-import { apiPost } from '../api/client'
 import { useAuth } from '../auth/context'
-import { useAction } from '../hooks/useAction'
 import styles from './Layout.module.css'
 
 const NEW_ORG = '__new__'
@@ -51,28 +49,9 @@ export default function Layout() {
           <Link to="/login">Sign in</Link>
         )}
       </header>
-      {me && !me.user.email_verified && <VerifyBanner email={me.user.email} />}
       <main className={styles.main}>
         <Outlet />
       </main>
-    </div>
-  )
-}
-
-function VerifyBanner({ email }: { email: string }) {
-  const { busy, error, run } = useAction()
-  const resend = () =>
-    run(async () => {
-      await apiPost('/auth/resend-verification')
-      window.alert(`We sent a new confirmation link to ${email}.`)
-    })
-  return (
-    <div className={`notice ${styles.banner}`}>
-      Confirm your email address using the link we sent to {email}.{' '}
-      <button className="link" disabled={busy} onClick={() => void resend()}>
-        Send it again
-      </button>
-      {error && <span className="error"> {error}</span>}
     </div>
   )
 }
