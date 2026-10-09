@@ -6,6 +6,7 @@ import type { PageDetail } from '../api/types/PageDetail'
 import type { PublishRequest } from '../api/types/PublishRequest'
 import type { SaveDraftRequest } from '../api/types/SaveDraftRequest'
 import type { SavedDraft } from '../api/types/SavedDraft'
+import { useContextMenu, useSlashMenu } from './EditorMenus'
 import { extensions } from './editorExtensions'
 import { pagePath } from './format'
 import styles from './PageEdit.module.css'
@@ -42,12 +43,15 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
   const saveRef = useRef<() => Promise<void>>(async () => {})
 
   const editor = useEditor({
-    extensions: extensions('Write something, or type / ## for a heading…'),
+    extensions: extensions('Write something, or type / for headings, lists and more…'),
     content: start.body_md,
     contentType: 'markdown',
     autofocus: isNew ? false : 'end',
     onUpdate: () => schedule(),
   })
+
+  const slashMenu = useSlashMenu(editor)
+  const contextMenu = useContextMenu(editor)
 
   const save = useCallback(async () => {
     if (!editor || !pending.current) return
@@ -183,7 +187,15 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
         }}
       />
       {editor && <Toolbar editor={editor} />}
-      <EditorContent editor={editor} className={`prose ${styles.body}`} />
+      <div
+        onKeyDownCapture={slashMenu.onKeyDown}
+        onMouseDownCapture={contextMenu.onMouseDown}
+        onContextMenu={contextMenu.onContextMenu}
+      >
+        <EditorContent editor={editor} className={`prose ${styles.body}`} />
+      </div>
+      {slashMenu.menu}
+      {contextMenu.menu}
       <p className="muted" style={{ marginTop: '2rem' }}>
         <Link to={`/${orgSlug}`}>← All pages</Link>
       </p>

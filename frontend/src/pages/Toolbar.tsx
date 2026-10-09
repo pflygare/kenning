@@ -1,7 +1,8 @@
 import { type Editor, useEditorState } from '@tiptap/react'
+import { editLink } from './formats'
 import styles from './Toolbar.module.css'
 
-/** Formatting buttons. Markdown shortcuts (`## `, `- `, `**bold**`) work too. */
+/** Formatting buttons. Markdown shortcuts (`## `, `- `, `**bold**`), "/" and right-click work too. */
 export default function Toolbar({ editor }: { editor: Editor }) {
   const state = useEditorState({
     editor,
@@ -20,13 +21,6 @@ export default function Toolbar({ editor }: { editor: Editor }) {
   })
 
   const chain = () => editor.chain().focus()
-  const setLink = () => {
-    const previous = editor.getAttributes('link').href as string | undefined
-    const url = window.prompt('Link address', previous ?? 'https://')
-    if (url === null) return
-    if (url === '') chain().extendMarkRange('link').unsetLink().run()
-    else chain().extendMarkRange('link').setLink({ href: url }).run()
-  }
 
   const buttons: [string, string, boolean, () => void][] = [
     ['B', 'Bold', state.bold, () => chain().toggleBold().run()],
@@ -38,7 +32,7 @@ export default function Toolbar({ editor }: { editor: Editor }) {
     ['❝', 'Quote', state.quote, () => chain().toggleBlockquote().run()],
     ['<>', 'Inline code', state.code, () => chain().toggleCode().run()],
     ['{ }', 'Code block', state.codeBlock, () => chain().toggleCodeBlock().run()],
-    ['🔗', 'Link', state.link, setLink],
+    ['🔗', 'Link', state.link, () => editLink(editor)],
   ]
 
   return (
