@@ -4,6 +4,12 @@
 }
 
 .sidebar {
+  /* Stays in place below the app bar while the page scrolls; scrolls itself if it's long. */
+  position: sticky;
+  top: 3.5rem;
+  align-self: flex-start;
+  height: calc(100vh - 3.5rem);
+  overflow-y: auto;
   flex: none;
   width: 15rem;
   display: flex;
@@ -132,6 +138,8 @@
   }
 
   .sidebar {
+    position: static;
+    height: auto;
     width: auto;
     flex-direction: row;
     flex-wrap: wrap;
