@@ -785,3 +785,20 @@ kbd {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
+
+.prose .tiptap figure {
+  margin-inline: 0;
+  margin-bottom: 0;
+}
+
+.prose .tiptap figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.prose .tiptap figure.ProseMirror-selectednode img {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

@@ -1,7 +1,7 @@
-import Image from '@tiptap/extension-image'
 import { Markdown } from '@tiptap/markdown'
 import Placeholder from '@tiptap/extension-placeholder'
 import StarterKit from '@tiptap/starter-kit'
+import { CaptionedImage } from './captionedImage'
 
 /** Editor features. Everything here round-trips through markdown, which is what we store. */
 export function extensions(placeholder?: string) {
@@ -11,8 +11,8 @@ export function extensions(placeholder?: string) {
       underline: false,
       link: { openOnClick: false, autolink: true },
     }),
-    // Images are their own blocks; uploads come from ImageUpload in the editor.
-    Image.configure({ HTMLAttributes: { loading: 'lazy' } }),
+    // Images are their own blocks, with an optional caption; uploads come from ImageUpload.
+    CaptionedImage.configure({ HTMLAttributes: { loading: 'lazy' } }),
     Markdown,
     ...(placeholder ? [Placeholder.configure({ placeholder })] : []),
   ]
