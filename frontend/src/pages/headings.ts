@@ -1,0 +1,51 @@
+import type { Editor } from '@tiptap/react'
+import { useEffect, useState } from 'react'
+
+export type Heading = { id: string; level: number; text: string; element: HTMLElement }
+
+/**
+ * Headings of rendered page content, each with an id for linking to it. The id lives only
+ * here: the editor owns its DOM and would redraw a heading whose attributes we touched.
+ */
+export function readHeadings(root: HTMLElement): Heading[] {
+  const used = new Map<string, number>()
+  return [...root.querySelectorAll<HTMLElement>('h1, h2, h3')]
+    .filter((element) => element.textContent?.trim())
+    .map((element) => {
+      const text = element.textContent!.trim()
+      const base =
+        text
+          .toLowerCase()
+          .normalize('NFKD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^\p{L}\p{N}]+/gu, '-')
+          .replace(/^-|-$/g, '') || 'section'
+      const n = (used.get(base) ?? 0) + 1
+      used.set(base, n)
+      const id = n === 1 ? base : `${base}-${n}`
+      return { id, level: Number(element.tagName[1]), text, element }
+    })
+}
+
+const same = (a: Heading[], b: Heading[]) =>
+  a.length === b.length &&
+  a.every((h, i) => h.id === b[i].id && h.level === b[i].level && h.element === b[i].element)
+
+/** The headings an editor (or read-only view) shows, kept current as its content changes. */
+export function useHeadings(editor: Editor | null): Heading[] {
+  const [headings, setHeadings] = useState<Heading[]>([])
+  useEffect(() => {
+    if (!editor) return
+    const report = () => {
+      const next = readHeadings(editor.view.dom)
+      setHeadings((prev) => (same(prev, next) ? prev : next))
+    }
+    const first = requestAnimationFrame(report)
+    editor.on('update', report)
+    return () => {
+      cancelAnimationFrame(first)
+      editor.off('update', report)
+    }
+  }, [editor])
+  return headings
+}

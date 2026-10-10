@@ -757,3 +757,14 @@ kbd {
   line-height: 1.5;
   text-align: center;
 }
+
+/* Keep page content clear of the outline docked on the right (see Outline.module.css). */
+@media (min-width: 68.0625rem) {
+  main:has(.outline-dock) {
+    margin-right: 19rem;
+  }
+}
+
+.prose .tiptap :where(h1, h2, h3) {
+  scroll-margin-top: 5rem;
+}
