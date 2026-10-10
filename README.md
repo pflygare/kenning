@@ -7,7 +7,7 @@
 A team knowledge base in the spirit of [Slab](https://slab.com): a calm place to write things down, organize them, and find them again.
 
 ## Vision
-
+ An outline beside each page lists its headings, follows along as you scroll and links straight to a section.
 - **Pages**: rich documents written in a fast, distraction-free markdown editor, with revision history.
 - **Topics**: hierarchical collections that organize pages. A page can live in more than one topic.
 - **Categories**: fixed choices such as an information class (Open, Internal, Restricted), required on every page or on pages in chosen topics.

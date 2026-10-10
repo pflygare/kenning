@@ -1,5 +1,28 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 46rem) 12rem;
+  gap: 2.5rem;
+  align-items: start;
+}
+
 .page {
+  min-width: 0;
   max-width: 46rem;
+}
+
+.aside {
+  height: 100%;
+}
+
+/* No room beside the page: the page takes the width and the outline steps aside. */
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: minmax(0, 46rem);
+  }
+
+  .aside {
+    display: none;
+  }
 }
 
 .banner {

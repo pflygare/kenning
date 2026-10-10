@@ -757,3 +757,12 @@ kbd {
   line-height: 1.5;
   text-align: center;
 }
+
+/* A page with its outline beside it gets a little more room than other screens. */
+main:has(> .with-outline) {
+  max-width: 66rem;
+}
+
+.prose .tiptap :where(h1, h2, h3) {
+  scroll-margin-top: 5rem;
+}

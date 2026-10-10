@@ -1,0 +1,41 @@
+.outline {
+  position: sticky;
+  top: 5.5rem;
+  max-height: calc(100vh - 7rem);
+  overflow-y: auto;
+  padding-left: 1rem;
+  border-left: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.title {
+  margin: 0 0 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.outline ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.outline a {
+  display: block;
+  padding: 0.25rem 0;
+  color: var(--text-muted);
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.outline a:hover {
+  color: var(--text);
+}
+
+.outline a.current {
+  color: var(--brand-strong);
+  font-weight: 600;
+}
