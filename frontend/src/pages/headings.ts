@@ -1,3 +1,6 @@
+import type { Editor } from '@tiptap/react'
+import { useEffect, useState } from 'react'
+
 export type Heading = { id: string; level: number; text: string; element: HTMLElement }
 
 /**
@@ -22,4 +25,27 @@ export function readHeadings(root: HTMLElement): Heading[] {
       const id = n === 1 ? base : `${base}-${n}`
       return { id, level: Number(element.tagName[1]), text, element }
     })
+}
+
+const same = (a: Heading[], b: Heading[]) =>
+  a.length === b.length &&
+  a.every((h, i) => h.id === b[i].id && h.level === b[i].level && h.element === b[i].element)
+
+/** The headings an editor (or read-only view) shows, kept current as its content changes. */
+export function useHeadings(editor: Editor | null): Heading[] {
+  const [headings, setHeadings] = useState<Heading[]>([])
+  useEffect(() => {
+    if (!editor) return
+    const report = () => {
+      const next = readHeadings(editor.view.dom)
+      setHeadings((prev) => (same(prev, next) ? prev : next))
+    }
+    const first = requestAnimationFrame(report)
+    editor.on('update', report)
+    return () => {
+      cancelAnimationFrame(first)
+      editor.off('update', report)
+    }
+  }, [editor])
+  return headings
 }

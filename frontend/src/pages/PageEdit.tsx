@@ -9,6 +9,8 @@ import type { SavedDraft } from '../api/types/SavedDraft'
 import { useContextMenu, useSlashMenu } from './EditorMenus'
 import { extensions } from './editorExtensions'
 import { pagePath } from './format'
+import { useHeadings } from './headings'
+import Outline from './Outline'
 import PageMeta from './PageMeta'
 import styles from './PageEdit.module.css'
 import Toolbar from './Toolbar'
@@ -51,6 +53,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
     onUpdate: () => schedule(),
   })
 
+  const headings = useHeadings(editor)
   const slashMenu = useSlashMenu(editor)
   const contextMenu = useContextMenu(editor)
 
@@ -198,6 +201,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
       </div>
       {slashMenu.menu}
       {contextMenu.menu}
+      <Outline headings={headings} />
       <p className="muted" style={{ marginTop: '2rem' }}>
         <Link to={`/${orgSlug}`}>← All pages</Link>
       </p>

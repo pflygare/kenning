@@ -8,7 +8,7 @@ A team knowledge base in the spirit of [Slab](https://slab.com): a calm place to
 
 ## Vision
 
-- **Pages**: rich documents written in a fast, distraction-free markdown editor, with revision history. An outline beside each page lists its headings, follows along as you scroll and links straight to a section.
+- **Pages**: rich documents written in a fast, distraction-free markdown editor, with revision history. An outline docked on the right lists the headings, while reading and while editing, follows along as you scroll and links straight to a section.
 - **Topics**: hierarchical collections that organize pages. A page can live in more than one topic.
 - **Categories**: fixed choices such as an information class (Open, Internal, Restricted), required on every page or on pages in chosen topics.
 - **Search**: full-text search across pages from a field in the top bar (Ctrl/⌘ K focuses it) that suggests pages and topics as you type, plus a search page with highlighted snippets and topic, tag and category filters. Gmail-style syntax narrows a search: `Engineering: roll back` searches inside a topic, and `topic:`, `tag:` and category names (`class:internal`) work as filters.

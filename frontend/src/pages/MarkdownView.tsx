@@ -1,7 +1,7 @@
 import { EditorContent, useEditor } from '@tiptap/react'
 import { useEffect } from 'react'
 import { extensions } from './editorExtensions'
-import { readHeadings, type Heading } from './headings'
+import { useHeadings, type Heading } from './headings'
 
 /** Read-only rendering of stored markdown, styled exactly like the editor. */
 export default function MarkdownView({
@@ -25,15 +25,10 @@ export default function MarkdownView({
     }
   }, [editor, markdown])
 
+  const headings = useHeadings(editor)
   useEffect(() => {
-    if (!editor || !onHeadings) return
-    const report = () => onHeadings(readHeadings(editor.view.dom))
-    report()
-    editor.on('update', report)
-    return () => {
-      editor.off('update', report)
-    }
-  }, [editor, onHeadings])
+    onHeadings?.(headings)
+  }, [headings, onHeadings])
 
   return <EditorContent editor={editor} className="prose" />
 }
