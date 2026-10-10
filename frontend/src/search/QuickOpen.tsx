@@ -2,18 +2,32 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { apiGet } from '../api/client'
 import type { QuickResults } from '../api/types/QuickResults'
+import type { SearchHit } from '../api/types/SearchHit'
+import type { SearchResults } from '../api/types/SearchResults'
 import { pagePath } from '../pages/format'
 import { topicPath } from '../topics/tree'
+import Marked from './Marked'
 import { searchPath } from './paths'
 import styles from './QuickOpen.module.css'
 
-type Option = { key: string; label: string; kind: 'page' | 'topic' | 'search'; to: string; draft?: boolean }
+type Option = {
+  key: string
+  label: string
+  kind: 'page' | 'text' | 'topic' | 'search'
+  to: string
+  draft?: boolean
+  snippet?: string
+}
 
-/** The ⌘K box: jump to a page or topic by title, or search everything. */
+/** Full-text matches shown under the title matches. */
+const TEXT_MATCHES = 5
+
+/** The ⌘K box: jump to a page or topic by title or by words in its text, or search everything. */
 export default function QuickOpen({ org, onClose }: { org: string; onClose: () => void }) {
   const navigate = useNavigate()
   const [q, setQ] = useState('')
   const [results, setResults] = useState<QuickResults | null>(null)
+  const [text, setText] = useState<{ q: string; hits: SearchHit[] }>({ q: '', hits: [] })
   const [index, setIndex] = useState(0)
   const latest = useRef('')
 
@@ -29,10 +43,19 @@ export default function QuickOpen({ org, onClose }: { org: string; onClose: () =
           }
         })
         .catch(() => setResults({ pages: [], topics: [] }))
+      if (q.trim()) {
+        apiGet<SearchResults>(`/orgs/${org}/search?q=${encodeURIComponent(q)}`)
+          .then((r) => {
+            if (latest.current === q) setText({ q, hits: r.pages })
+          })
+          .catch(() => setText({ q, hits: [] }))
+      }
     }, 80)
     return () => window.clearTimeout(timer)
   }, [org, q])
 
+  const titled = new Set((results?.pages ?? []).map((p) => p.short_id))
+  const textHits = q.trim() && text.q === q ? text.hits.filter((h) => !titled.has(h.short_id)).slice(0, TEXT_MATCHES) : []
   const options: Option[] = [
     ...(results?.pages ?? []).map((p) => ({
       key: `p${p.short_id}`,
@@ -40,6 +63,14 @@ export default function QuickOpen({ org, onClose }: { org: string; onClose: () =
       kind: 'page' as const,
       to: pagePath(org, p),
       draft: !p.published,
+    })),
+    ...textHits.map((h) => ({
+      key: `x${h.short_id}`,
+      label: h.title,
+      kind: 'text' as const,
+      to: pagePath(org, h),
+      draft: !h.published,
+      snippet: h.snippet,
     })),
     ...(results?.topics ?? []).map((t) => ({
       key: `t${t.short_id}`,
@@ -55,7 +86,7 @@ export default function QuickOpen({ org, onClose }: { org: string; onClose: () =
   const go = (option: Option | undefined) => {
     if (!option) return
     onClose()
-    navigate(option.to)
+    navigate(option.to, option.kind === 'search' ? { state: { searchId: Date.now() } } : undefined)
   }
 
   return (
@@ -70,8 +101,8 @@ export default function QuickOpen({ org, onClose }: { org: string; onClose: () =
         <input
           autoFocus
           className={styles.input}
-          aria-label="Search titles"
-          placeholder="Jump to a page or topic…"
+          aria-label="Find a page"
+          placeholder="Find a page or topic…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => {
@@ -95,14 +126,33 @@ export default function QuickOpen({ org, onClose }: { org: string; onClose: () =
               onClick={() => go(option)}
             >
               <span className={styles.icon} aria-hidden="true">
-                {option.kind === 'page' ? <PageIcon /> : option.kind === 'topic' ? <FolderIcon /> : <SearchIcon />}
+                {option.kind === 'page' || option.kind === 'text' ? (
+                  <PageIcon />
+                ) : option.kind === 'topic' ? (
+                  <FolderIcon />
+                ) : (
+                  <SearchIcon />
+                )}
               </span>
-              <span className={styles.text}>{option.label}</span>
+              {option.kind === 'text' ? (
+                <span className={styles.text}>
+                  <Marked text={option.label} />
+                  {option.snippet?.trim() && (
+                    <span className={styles.snippet}>
+                      <Marked text={option.snippet} />
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className={styles.text}>{option.label}</span>
+              )}
               {option.draft && <span className="badge draft">Draft</span>}
               {option.kind === 'topic' && <span className="muted">Topic</span>}
             </li>
           ))}
-          {q.trim() && results && options.length === 1 && <li className={styles.empty}>No titles match.</li>}
+          {q.trim() && results && text.q === q && options.length === 1 && (
+            <li className={styles.empty}>No pages or topics match.</li>
+          )}
         </ul>
         <div className={styles.footer}>
           <span>

@@ -74,6 +74,14 @@
   white-space: nowrap;
 }
 
+.snippet {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
 .empty {
   padding: 0.5rem 0.625rem;
   color: var(--text-muted);

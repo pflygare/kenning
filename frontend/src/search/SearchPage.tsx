@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { apiGet, errorMessage } from '../api/client'
 import type { Category } from '../api/types/Category'
 import type { SearchResults } from '../api/types/SearchResults'
@@ -17,13 +17,17 @@ const FILTERS = ['topic', 'tag', 'value'] as const
 
 /** Full-text search over pages, with topic, tag and category filters kept in the address. */
 export default function SearchPage() {
-  const [params] = useSearchParams()
-  return <Search key={params.toString()} params={params} />
+  // Searching from the ⌘K box starts over with what was typed there.
+  const location = useLocation()
+  const state = location.state as { searchId?: number } | null
+  return <Search key={state?.searchId ?? 'here'} />
 }
 
-function Search({ params }: { params: URLSearchParams }) {
+function Search() {
   const org = useOrg()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [params] = useSearchParams()
   const { topics } = useTopics()
   const q = params.get('q') ?? ''
   const [text, setText] = useState(q)
@@ -31,11 +35,20 @@ function Search({ params }: { params: URLSearchParams }) {
   const [error, setError] = useState<string | null>(null)
   const [tags, setTags] = useState<Tag[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const latest = useRef('')
 
   useEffect(() => {
+    const query = params.toString()
+    latest.current = query
     if (!q.trim()) return
-    apiGet<SearchResults>(`/orgs/${org.slug}/search?${params}`)
-      .then(setResults)
+    apiGet<SearchResults>(`/orgs/${org.slug}/search?${query}`)
+      .then((r) => {
+        // Typing sends many searches; show only the answer for the latest.
+        if (latest.current === query) {
+          setResults(r)
+          setError(null)
+        }
+      })
       .catch((err: unknown) => setError(errorMessage(err)))
   }, [org.slug, params, q])
 
@@ -54,10 +67,19 @@ function Search({ params }: { params: URLSearchParams }) {
       if (value) next.set(key, value)
       else next.delete(key)
     }
-    navigate(`/${org.slug}/search?${next}`, { replace: !('q' in changes) })
+    // Typing replaces the address as it goes, so Back leaves search instead of undoing letters.
+    navigate(`/${org.slug}/search?${next}`, { replace: true, state: location.state })
   }
 
+  // Search a moment after typing stops.
+  useEffect(() => {
+    if (text.trim() === q.trim()) return
+    const timer = window.setTimeout(() => update({ q: text.trim() }), 200)
+    return () => window.clearTimeout(timer)
+  })
+
   const filtered = FILTERS.some((f) => params.get(f))
+  const shown = q.trim() ? results : null
 
   return (
     <>
@@ -65,9 +87,9 @@ function Search({ params }: { params: URLSearchParams }) {
         <div>
           <h1>Search</h1>
           <p>
-            Every word matches the start of a word in a title, body or tag. Press{' '}
-            <kbd>{navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl'}</kbd> <kbd>K</kbd> anywhere to jump to a
-            page by title.
+            Results update as you type; every word matches the start of a word in a title, body or tag. Press{' '}
+            <kbd>{navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl'}</kbd> <kbd>K</kbd> anywhere to find a
+            page from any screen.
           </p>
         </div>
       </div>
@@ -80,7 +102,7 @@ function Search({ params }: { params: URLSearchParams }) {
         }}
       >
         <input
-          autoFocus={!q}
+          autoFocus
           type="search"
           aria-label="Search pages"
           placeholder="Search pages"
@@ -88,7 +110,6 @@ function Search({ params }: { params: URLSearchParams }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
-        <button className="primary">Search</button>
       </form>
       <div className={styles.filters}>
         <select
@@ -138,28 +159,28 @@ function Search({ params }: { params: URLSearchParams }) {
       </div>
 
       {error && <p className="alert error">{error}</p>}
-      {results && results.topics.length > 0 && (
+      {shown && shown.topics.length > 0 && (
         <div className={`chips ${styles.topics}`} aria-label="Matching topics">
           <span className="muted">Topics</span>
-          {results.topics.map((topic) => (
+          {shown.topics.map((topic) => (
             <Link key={topic.id} to={topicPath(org.slug, topic)} className={styles.topic}>
               {topic.name}
             </Link>
           ))}
         </div>
       )}
-      {results && q.trim() && (
+      {shown && (
         <p className={`muted ${styles.count}`} aria-live="polite">
-          {results.pages.length === 0
+          {shown.pages.length === 0
             ? `No pages match “${q}”${filtered ? ' with these filters' : ''}.`
-            : results.pages.length === 1
+            : shown.pages.length === 1
               ? '1 page'
-              : `${results.pages.length} pages${results.pages.length === 50 ? ' (the best 50)' : ''}`}
+              : `${shown.pages.length} pages${shown.pages.length === 50 ? ' (the best 50)' : ''}`}
         </p>
       )}
-      {results && results.pages.length > 0 && (
+      {shown && shown.pages.length > 0 && (
         <ol className={`card ${styles.results}`}>
-          {results.pages.map((hit) => (
+          {shown.pages.map((hit) => (
             <li key={hit.short_id} className={styles.hit}>
               <div className={styles.head}>
                 <Link to={pagePath(org.slug, hit)} className={styles.title}>
