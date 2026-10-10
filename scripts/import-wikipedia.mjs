@@ -8,8 +8,9 @@
 //
 // Options: --url (default http://localhost:3000), --lang (default en), --topic (default
 // Wikipedia; created if missing), and article titles as extra arguments. Required categories
-// get their most open value (Open or Public if there is one). Articles already
-// in the organization (same title) are skipped, so running it again is safe.
+// get their most open value (Open or Public if there is one). Each section brings the first
+// picture Wikipedia shows in it, uploaded into Kenning. Articles already in the organization
+// (same title) are skipped, or with --update get a new published version.
 
 import { createInterface } from 'node:readline/promises'
 import { parseArgs } from 'node:util'
@@ -49,6 +50,8 @@ const { values, positionals } = parseArgs({
     lang: { type: 'string', default: 'en' },
     topic: { type: 'string', default: 'Wikipedia' },
     'wiki-api': { type: 'string' },
+    update: { type: 'boolean', default: false },
+    'no-images': { type: 'boolean', default: false },
   },
 })
 if (!values.email || !values.org) {
@@ -69,6 +72,17 @@ const api = `${values.url.replace(/\/$/, '')}/api`
 const org = `${api}/orgs/${values.org}`
 
 let cookie = ''
+const WIKI_HEADERS = {
+  'user-agent': 'kenning-dev-import/0.1 (https://github.com/pflygare/kenning)',
+}
+
+async function wiki(params) {
+  const query = new URLSearchParams({ format: 'json', formatversion: '2', ...params })
+  const res = await fetch(`${wikiApi}?${query}`, { headers: WIKI_HEADERS })
+  if (!res.ok) throw new Error(`Wikipedia: ${res.status}`)
+  return res.json()
+}
+
 async function kenning(method, url, body) {
   const res = await fetch(url, {
     method,
@@ -94,9 +108,7 @@ async function fetchArticle(title) {
     format: 'json',
     formatversion: '2',
   })
-  const res = await fetch(`${wikiApi}?${params}`, {
-    headers: { 'user-agent': 'kenning-dev-import/0.1 (https://github.com/pflygare/kenning)' },
-  })
+  const res = await fetch(`${wikiApi}?${params}`, { headers: WIKI_HEADERS })
   if (!res.ok) throw new Error(`Wikipedia ${title}: ${res.status}`)
   const page = (await res.json()).query?.pages?.[0]
   if (!page || page.missing || !page.extract) throw new Error(`Wikipedia has no article "${title}"`)
@@ -108,8 +120,97 @@ function articleUrl(title) {
   return `${base}/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`
 }
 
-/** Plain-text extract to markdown: "== X ==" becomes "## X", each line a paragraph. */
-export function toMarkdown(text, link) {
+const MAX_IMAGES = 12
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+
+const stripTags = (html) =>
+  html
+    .replace(/<[^>]+>/g, '')
+    .replace(/\[edit\]/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
+
+/**
+ * The first picture in each section of the article as Wikipedia renders it, keyed by the
+ * section's heading ('' for the lead), with a thumbnail URL. Icons and diagrams drawn as
+ * SVG are left out.
+ */
+async function articleImages(title) {
+  const html = (await wiki({ action: 'parse', page: title, prop: 'text', redirects: '1' })).parse
+    ?.text
+  if (!html) return new Map()
+  const firstBySection = new Map()
+  const seen = new Set()
+  let section = ''
+  const pattern = /<h([2-4])\b[^>]*>([\s\S]*?)<\/h\1>|href="\/wiki\/(File:[^"#?]+)"/g
+  for (const match of html.matchAll(pattern)) {
+    if (match[1]) {
+      section = stripTags(match[2])
+      continue
+    }
+    const file = decodeURIComponent(match[3]).replace(/_/g, ' ')
+    if (/\.svg$/i.test(file) || seen.has(file) || SKIPPED_SECTIONS.has(section.toLowerCase()))
+      continue
+    seen.add(file)
+    if (!firstBySection.has(section)) firstBySection.set(section, [])
+    firstBySection.get(section).push(file)
+  }
+  // Ask for every candidate at once, then keep the first real picture per section.
+  const candidates = [...firstBySection.values()].flatMap((files) => files.slice(0, 3))
+  const info = new Map()
+  for (let i = 0; i < candidates.length; i += 50) {
+    const result = await wiki({
+      action: 'query',
+      titles: candidates.slice(i, i + 50).join('|'),
+      prop: 'imageinfo',
+      iiprop: 'url|size|mime',
+      iiurlwidth: '960',
+    })
+    const renamed = new Map((result.query?.normalized ?? []).map((n) => [n.to, n.from]))
+    for (const page of result.query?.pages ?? []) {
+      const image = page.imageinfo?.[0]
+      if (image) info.set(renamed.get(page.title) ?? page.title, image)
+    }
+  }
+  const images = new Map()
+  for (const [heading, files] of firstBySection) {
+    const file = files.slice(0, 3).find((f) => {
+      const image = info.get(f)
+      return image && IMAGE_TYPES.has(image.mime) && image.width >= 200 && image.height >= 120
+    })
+    if (file) images.set(heading, { file, url: info.get(file).thumburl ?? info.get(file).url })
+    if (images.size >= MAX_IMAGES) break
+  }
+  return images
+}
+
+/** Download a Wikipedia image and upload it to Kenning; returns its markdown. */
+async function copyImage({ file, url }) {
+  const res = await fetch(url, { headers: WIKI_HEADERS })
+  if (!res.ok) throw new Error(`${file}: ${res.status}`)
+  const type = res.headers.get('content-type')?.split(';')[0] ?? 'image/jpeg'
+  const name = file.replace(/^File:/, '')
+  const upload = await fetch(`${org}/files?name=${encodeURIComponent(name)}`, {
+    method: 'POST',
+    headers: { 'content-type': type, 'x-requested-with': 'kenning', cookie },
+    body: Buffer.from(await res.arrayBuffer()),
+  })
+  if (!upload.ok) throw new Error(`${file}: ${upload.status} ${await upload.text()}`)
+  const uploaded = await upload.json()
+  const alt = name.replace(/\.[a-z0-9]+$/i, '').replace(/[[\]]/g, '')
+  return `![${alt}](${uploaded.url})`
+}
+
+/**
+ * Plain-text extract to markdown: "== X ==" becomes "## X", each line a paragraph, and
+ * `images` (markdown keyed by heading, '' for the lead) goes under its heading.
+ */
+export function toMarkdown(text, link, images = new Map()) {
   const out = []
   let skipDepth = 0
   for (const raw of text.split('\n')) {
@@ -133,9 +234,19 @@ export function toMarkdown(text, link) {
     const next = out.slice(i + 1).find((n) => !n.heading || n.heading <= item.heading)
     return next && !next.heading
   })
-  const body = kept.map((item) =>
-    item.heading ? `${'#'.repeat(Math.min(item.heading, 4))} ${item.text}` : item.text,
-  )
+  const body = []
+  let leadImage = images.get('')
+  for (const item of kept) {
+    if (item.heading) {
+      body.push(`${'#'.repeat(Math.min(item.heading, 4))} ${item.text}`)
+      if (images.has(item.text)) body.push(images.get(item.text))
+    } else {
+      body.push(item.text)
+      // The lead picture goes after the first paragraph.
+      if (leadImage) body.push(leadImage)
+      leadImage = undefined
+    }
+  }
   body.push(`*From Wikipedia: [${link}](${link}), under CC BY-SA 4.0.*`)
   return body.join('\n\n') + '\n'
 }
@@ -164,26 +275,51 @@ async function main() {
       value_id: (c.values.find((v) => /^(open|public)/i.test(v.name)) ?? c.values[0]).id,
     }))
 
-  const titles = new Set((await kenning('GET', `${org}/pages`)).map((p) => p.title))
+  const existing = new Map((await kenning('GET', `${org}/pages`)).map((p) => [p.title, p]))
 
   for (const name of articles) {
     try {
       const article = await fetchArticle(name)
-      if (titles.has(article.title)) {
-        console.log(`Skipped ${article.title} (already there)`)
+      const before = existing.get(article.title)
+      if (before && !values.update) {
+        console.log(`Skipped ${article.title} (already there; --update replaces it)`)
         continue
       }
-      const body_md = toMarkdown(article.text, article.link)
-      const page = await kenning('POST', `${org}/pages`, { title: article.title, body_md })
-      await kenning('PUT', `${org}/pages/${page.short_id}/topics`, { topic_ids: [topic.id] })
+      const images = new Map()
+      if (!values['no-images']) {
+        for (const [heading, image] of await articleImages(article.title)) {
+          try {
+            images.set(heading, await copyImage(image))
+          } catch (err) {
+            console.error(`  Left out an image: ${err.message}`)
+          }
+        }
+      }
+      const body_md = toMarkdown(article.text, article.link, images)
+      let page
+      let revision
+      if (before) {
+        // A new version of the same page, so links to it keep working.
+        page = await kenning('GET', `${org}/pages/${before.short_id}`)
+        const base = (page.draft ?? page.published).revision_id
+        const saved = await kenning('PUT', `${org}/pages/${page.short_id}/draft`, {
+          base_revision_id: base,
+          title: article.title,
+          body_md,
+        })
+        revision = saved.revision_id
+      } else {
+        page = await kenning('POST', `${org}/pages`, { title: article.title, body_md })
+        await kenning('PUT', `${org}/pages/${page.short_id}/topics`, { topic_ids: [topic.id] })
+        revision = page.draft.revision_id
+      }
       for (const value of required) {
         await kenning('PUT', `${org}/pages/${page.short_id}/categories`, value)
       }
-      await kenning('POST', `${org}/pages/${page.short_id}/publish`, {
-        revision_id: page.draft.revision_id,
-      })
-      titles.add(article.title)
-      console.log(`Added ${article.title} (${Math.round(body_md.length / 1000)}k characters)`)
+      await kenning('POST', `${org}/pages/${page.short_id}/publish`, { revision_id: revision })
+      existing.set(article.title, page)
+      const size = `${Math.round(body_md.length / 1000)}k characters, ${images.size} images`
+      console.log(`${before ? 'Updated' : 'Added'} ${article.title} (${size})`)
     } catch (err) {
       console.error(`Failed ${name}: ${err.message}`)
       process.exitCode = 1
