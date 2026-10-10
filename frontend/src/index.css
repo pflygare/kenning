@@ -635,10 +635,9 @@ a.tag:hover {
   gap: 0.3rem;
   margin-top: 0.45rem;
   padding: 0.1rem 0.65rem;
-  border: 1px solid var(--border-strong);
   border-radius: 0 6px 6px 6px;
-  background: var(--surface-muted);
-  color: var(--text);
+  background: var(--text);
+  color: var(--surface-muted);
   font-size: 0.78rem;
   font-weight: 550;
   line-height: 1.5;
@@ -649,23 +648,18 @@ a.tag:hover {
 .topic-chip::before {
   content: '';
   position: absolute;
-  left: -1px;
-  top: -0.45rem;
+  left: 0;
+  top: -0.42rem;
   width: 1.6rem;
   height: 0.45rem;
-  border: 1px solid var(--border-strong);
-  border-bottom: none;
   border-radius: 5px 6px 0 0;
-  background: var(--surface-muted);
+  background: inherit;
 }
 
 a.topic-chip:hover {
-  border-color: var(--text-muted);
+  background: color-mix(in srgb, var(--text) 80%, var(--brand));
+  color: var(--surface);
   text-decoration: none;
-}
-
-a.topic-chip:hover::before {
-  border-color: var(--text-muted);
 }
 
 .category-value {

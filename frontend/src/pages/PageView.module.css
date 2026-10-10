@@ -80,7 +80,11 @@
   text-underline-offset: 2px;
 }
 
-/* Tags sit above the title, like labels tied to the page. */
+/* Tags sit above the title, like labels tied to the page, and the topics it's filed in right above it. */
 .tags {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.5rem;
+}
+
+.topics {
+  margin: 0 0 0.35rem;
 }
