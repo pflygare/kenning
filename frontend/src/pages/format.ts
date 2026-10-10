@@ -7,6 +7,16 @@ export function pagePath(org: string, page: { slug: string; short_id: string }):
   return `/${org}/p/${page.slug}-${page.short_id}`
 }
 
+/** Puts this site's address for `path` on the clipboard, to paste as a link to it. */
+export async function copyLink(path: string): Promise<void> {
+  const url = window.location.origin + path
+  try {
+    await navigator.clipboard.writeText(url)
+  } catch {
+    window.prompt('Copy this link', url)
+  }
+}
+
 /** "just now", "5 minutes ago", "3 days ago", or a date. */
 export function timeAgo(iso: string): string {
   const seconds = (Date.now() - new Date(iso).getTime()) / 1000

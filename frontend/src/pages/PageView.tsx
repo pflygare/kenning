@@ -6,9 +6,10 @@ import type { PageDetail } from '../api/types/PageDetail'
 import type { PublishRequest } from '../api/types/PublishRequest'
 import type { TemplateDetail } from '../api/types/TemplateDetail'
 import { useAction } from '../hooks/useAction'
-import { pagePath, timeAgo } from './format'
+import { copyLink, pagePath, timeAgo } from './format'
 import MarkdownView from './MarkdownView'
 import type { Heading } from './headings'
+import LinkPreviews from './LinkPreviews'
 import Outline from './Outline'
 import PageMeta from './PageMeta'
 import styles from './PageView.module.css'
@@ -133,6 +134,7 @@ export default function PageView() {
                 <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
                   Page history
                 </Link>
+                <button onClick={() => void copyLink(here)}>Copy link</button>
                 <button onClick={saveAsTemplate} disabled={action.busy}>
                   Save as template
                 </button>
@@ -166,12 +168,22 @@ export default function PageView() {
         />
 
         {shown.body_md.trim() ? (
-          <MarkdownView markdown={shown.body_md} onHeadings={setHeadings} />
+          <LinkPreviews
+            key={page.short_id}
+            org={org.slug}
+            follow
+            onSection={(id) => {
+              headings.find((h) => h.id === id)?.element.scrollIntoView({ behavior: 'smooth' })
+              history.replaceState(history.state, '', `#${encodeURIComponent(id)}`)
+            }}
+          >
+            <MarkdownView markdown={shown.body_md} onHeadings={setHeadings} />
+          </LinkPreviews>
         ) : (
           <p className="muted">This page is empty.</p>
         )}
       </article>
-      {shown.body_md.trim() && <Outline headings={headings} />}
+      {shown.body_md.trim() && <Outline key={page.short_id} headings={headings} linkBase={here} />}
     </>
   )
 }

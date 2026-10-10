@@ -73,7 +73,8 @@ export function useSlashMenu(editor: Editor | null) {
     const move = (by: number) => setIndex((i) => (i + by + items.length) % items.length)
     if (event.key === 'ArrowDown') move(1)
     else if (event.key === 'ArrowUp') move(-1)
-    else if (event.key === 'Enter' || event.key === 'Tab') choose(items[Math.min(index, items.length - 1)])
+    else if (event.key === 'Enter' || event.key === 'Tab')
+      choose(items[Math.min(index, items.length - 1)])
     else if (event.key === 'Escape') {
       dismissed.current = slash.from
       setSlash(null)
@@ -208,11 +209,19 @@ export function useContextMenu(editor: Editor | null) {
         onMouseDown={(e) => e.preventDefault()}
         onContextMenu={(e) => e.preventDefault()}
       >
-        <button type="button" role="menuitem" onClick={() => run(() => editImageText(editor, 'caption'))}>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => run(() => editImageText(editor, 'caption'))}
+        >
           <span className={styles.icon}>T</span>
           {editor.getAttributes('image').title ? 'Edit caption…' : 'Add caption…'}
         </button>
-        <button type="button" role="menuitem" onClick={() => run(() => editImageText(editor, 'alt'))}>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => run(() => editImageText(editor, 'alt'))}
+        >
           <span className={styles.icon}>Aa</span>
           Alt text…
         </button>
@@ -236,7 +245,8 @@ export function useContextMenu(editor: Editor | null) {
       </div>
     ) : null
 
-  const menu = imageMenu ??
+  const menu =
+    imageMenu ??
     (at && editor ? (
       <div
         ref={ref}
@@ -289,12 +299,34 @@ export function useContextMenu(editor: Editor | null) {
             {format.label}
           </button>
         ))}
+        {editor.isActive('link') && (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() =>
+              run(() => editor.chain().focus().extendMarkRange('link').unsetLink().run())
+            }
+          >
+            <span className={styles.icon}>⌀</span>
+            Remove link
+          </button>
+        )}
         <div className={styles.separator} />
-        <button type="button" role="menuitem" disabled={!hasSelection} onClick={() => run(() => void clipboard('cut'))}>
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!hasSelection}
+          onClick={() => run(() => void clipboard('cut'))}
+        >
           <span className={styles.icon} />
           Cut
         </button>
-        <button type="button" role="menuitem" disabled={!hasSelection} onClick={() => run(() => void clipboard('copy'))}>
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!hasSelection}
+          onClick={() => run(() => void clipboard('copy'))}
+        >
           <span className={styles.icon} />
           Copy
         </button>

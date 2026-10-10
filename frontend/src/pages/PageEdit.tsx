@@ -11,6 +11,9 @@ import { extensions } from './editorExtensions'
 import { pagePath } from './format'
 import { useHeadings } from './headings'
 import { ImageUpload } from './imageUpload'
+import LinkPreviews from './LinkPreviews'
+import PageLinkPicker from './PageLinkPicker'
+import { PageLinks } from './pageLinks'
 import Outline from './Outline'
 import PageMeta from './PageMeta'
 import styles from './PageEdit.module.css'
@@ -37,6 +40,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
   const [state, setState] = useState<SaveState>('saved')
   const [message, setMessage] = useState<string | null>(null)
   const [uploads, setUploads] = useState(0)
+  const [linking, setLinking] = useState(false)
 
   // The revision the next save builds on, and whether edits are waiting.
   const base = useRef(start.revision_id)
@@ -55,12 +59,16 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
         onUploading: (change) => setUploads((n) => n + change),
         onError: setMessage,
       }),
+      // The "/" menu, the right-click menu and the toolbar open the page picker.
+      PageLinks.configure({ org: orgSlug, openPicker: () => setLinking(true) }),
     ],
     content: start.body_md,
     contentType: 'markdown',
     autofocus: isNew ? false : 'end',
     onUpdate: () => schedule(),
   })
+
+  const closePicker = useCallback(() => setLinking(false), [])
 
   const headings = useHeadings(editor)
   const slashMenu = useSlashMenu(editor)
@@ -215,11 +223,14 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
         onMouseDownCapture={contextMenu.onMouseDown}
         onContextMenu={contextMenu.onContextMenu}
       >
-        <EditorContent editor={editor} className={`prose ${styles.body}`} />
+        <LinkPreviews org={orgSlug}>
+          <EditorContent editor={editor} className={`prose ${styles.body}`} />
+        </LinkPreviews>
       </div>
       {slashMenu.menu}
       {contextMenu.menu}
-      <Outline headings={headings} />
+      {linking && editor && <PageLinkPicker editor={editor} org={orgSlug} onClose={closePicker} />}
+      <Outline headings={headings} linkBase={pagePath(orgSlug, page)} />
       <p className="muted" style={{ marginTop: '2rem' }}>
         <Link to={`/${orgSlug}`}>← All pages</Link>
       </p>

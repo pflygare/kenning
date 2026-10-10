@@ -36,6 +36,7 @@ export default function Toolbar({ editor }: { editor: Editor }) {
     ['<>', 'Inline code', state.code, () => chain().toggleCode().run()],
     ['{ }', 'Code block', state.codeBlock, () => chain().toggleCodeBlock().run()],
     ['🔗', 'Link', state.link, () => editLink(editor)],
+    ['↗', 'Link to page', false, () => editor.commands.openPageLinkPicker()],
     ['🖼', 'Image', false, () => editor.commands.pickImage()],
   ]
 

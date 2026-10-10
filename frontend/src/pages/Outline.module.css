@@ -62,3 +62,36 @@
   color: var(--brand-strong);
   font-weight: 600;
 }
+
+.outline li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.outline li a {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Copies a link to the section; shown while the row is hovered or focused. */
+.copy {
+  flex-shrink: 0;
+  height: 1.5rem;
+  margin-top: 0.1rem;
+  padding: 0 0.3rem;
+  border: none;
+  background: none;
+  box-shadow: none;
+  font-size: 0.75rem;
+  opacity: 0;
+}
+
+.outline li:hover .copy,
+.copy:focus-visible {
+  opacity: 0.7;
+}
+
+.copy:hover {
+  opacity: 1;
+}

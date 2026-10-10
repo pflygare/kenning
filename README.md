@@ -9,6 +9,7 @@ A team knowledge base in the spirit of [Slab](https://slab.com): a calm place to
 ## Vision
 
 - **Pages**: rich documents written in a fast, distraction-free markdown editor, with revision history. Images can be added from the / and right-click menus, by pasting or by dragging them in. An outline docked on the right lists the headings, while reading and while editing, follows along as you scroll and links straight to a section.
+- **Links between pages**: "Link to page…" in the / and right-click menus (or the toolbar) finds a page by title and links to it or to one of its sections. Pasting a page's address makes a link titled with the page's name. Resting the pointer on a link to another page shows that page in a card, scrolled to the linked section; the outline copies a link to any section.
 - **History**: every version of a page is kept and marked live, published, draft, discarded or restored. Open one to read it, see what it changed or compare it with the page now, and restore it as a new draft. Archived pages wait in the Archive, where they can be restored.
 - **Templates**: starting points for new pages, made from scratch or saved from any page. A template can preset the title, text, topics and tags, and fills in `{{date}}`, `{{author}}` and `{{title}}`; **+ New page** offers them.
 - **Topics**: hierarchical collections that organize pages. A page can live in more than one topic.
