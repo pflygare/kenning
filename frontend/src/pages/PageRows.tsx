@@ -30,7 +30,7 @@ export default function PageRows({ org, pages }: { org: string; pages: PageSumma
                 <Link
                   key={value.id}
                   to={valueListPath(org, value)}
-                  className={`tag value ${value.color}`}
+                  className={`category-value ${value.color}`}
                   title={`${value.category}: ${value.name}`}
                 >
                   {value.name}

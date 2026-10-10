@@ -587,18 +587,28 @@ button.small {
   color: var(--success);
 }
 
-/* Tags: one hue per color name; text and fill derive from it, so both themes work. */
+/*
+ * Three kinds of labels, each shaped like what it is:
+ * - tags are luggage tags: a pointed end with a punched hole, in the tag's color;
+ * - topics are folders: a tab on top, because a topic is where a page is filed;
+ * - category values are classification stamps: square, bordered, small capitals.
+ * One hue per color name; text and fill derive from it, so both themes work.
+ */
 
 .tag {
   --tag: #64748b;
+  --point: 0.7rem;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   max-width: 100%;
-  padding: 0.05rem 0.55rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--tag) 14%, transparent);
+  padding: 0.1rem 0.6rem 0.1rem calc(var(--point) + 0.55rem);
+  border-radius: 0 4px 4px 0;
+  background: color-mix(in srgb, var(--tag) 16%, transparent);
   color: color-mix(in srgb, var(--tag) 75%, var(--text));
+  clip-path: polygon(var(--point) 0, 100% 0, 100% 100%, var(--point) 100%, 0 50%);
+  -webkit-mask: radial-gradient(circle at calc(var(--point) + 0.05rem) 50%, transparent 0.16rem, #000 0.17rem);
+  mask: radial-gradient(circle at calc(var(--point) + 0.05rem) 50%, transparent 0.16rem, #000 0.17rem);
   font-size: 0.78rem;
   font-weight: 550;
   line-height: 1.5;
@@ -606,31 +616,106 @@ button.small {
 }
 
 a.tag:hover {
-  background: color-mix(in srgb, var(--tag) 24%, transparent);
+  background: color-mix(in srgb, var(--tag) 26%, transparent);
   text-decoration: none;
 }
 
-.tag.blue { --tag: #2563eb; }
-.tag.green { --tag: #16a34a; }
-.tag.amber { --tag: #d97706; }
-.tag.red { --tag: #dc2626; }
-.tag.purple { --tag: #9333ea; }
-.tag.teal { --tag: #0d9488; }
-.tag.pink { --tag: #db2777; }
+:is(.tag, .category-value).blue { --tag: #2563eb; }
+:is(.tag, .category-value).green { --tag: #16a34a; }
+:is(.tag, .category-value).amber { --tag: #d97706; }
+:is(.tag, .category-value).red { --tag: #dc2626; }
+:is(.tag, .category-value).purple { --tag: #9333ea; }
+:is(.tag, .category-value).teal { --tag: #0d9488; }
+:is(.tag, .category-value).pink { --tag: #db2777; }
 
-/* Category values: squarer than tags so the two read differently. */
-.tag.value {
-  border-radius: 5px;
+.topic-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+  padding: 0.1rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0 6px 6px 6px;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 550;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* The folder's tab. */
+.topic-chip::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: -0.45rem;
+  width: 1.6rem;
+  height: 0.45rem;
+  border: 1px solid var(--border-strong);
+  border-bottom: none;
+  border-radius: 5px 6px 0 0;
+  background: var(--surface-muted);
+}
+
+a.topic-chip:hover {
+  border-color: var(--text-muted);
+  text-decoration: none;
+}
+
+a.topic-chip:hover::before {
+  border-color: var(--text-muted);
+}
+
+.category-value {
+  --tag: #64748b;
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--tag) 55%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--tag) 9%, transparent);
+  color: color-mix(in srgb, var(--tag) 80%, var(--text));
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.category-value > * {
+  padding: 0 0.45rem;
+}
+
+.category-value:not(:has(> *)) {
+  padding: 0 0.45rem;
+}
+
+/* "Information class | INTERNAL": the category's name, then its value. */
+.category-value .category-name {
+  border-right: 1px solid color-mix(in srgb, var(--tag) 40%, transparent);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+a.category-value:hover {
+  background: color-mix(in srgb, var(--tag) 18%, transparent);
+  text-decoration: none;
 }
 
 /* A required category with no value yet. */
-.tag.missing {
+.category-value.missing {
   --tag: #d97706;
-  border: 1px dashed color-mix(in srgb, var(--tag) 60%, transparent);
+  border-style: dashed;
   background: none;
 }
 
-.tag button {
+:is(.tag, .topic-chip) button {
   width: 1rem;
   height: 1rem;
   padding: 0;
@@ -644,7 +729,7 @@ a.tag:hover {
   opacity: 0.7;
 }
 
-.tag button:hover {
+:is(.tag, .topic-chip) button:hover {
   opacity: 1;
   background: color-mix(in srgb, var(--tag) 20%, transparent);
 }

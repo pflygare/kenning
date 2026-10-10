@@ -79,3 +79,8 @@
   text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
   text-underline-offset: 2px;
 }
+
+/* Tags sit above the title, like labels tied to the page. */
+.tags {
+  margin: 0 0 0.75rem;
+}

@@ -74,13 +74,6 @@
   font-size: 0.875rem;
 }
 
-.topicChip {
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  background: none;
-  color: var(--text);
-}
-
 .check {
   gap: 0.5rem;
   cursor: pointer;

@@ -95,7 +95,7 @@ export default function RequirementPicker({
 
 function TopicChip({ topic, onRemove }: { topic: TopicRef; onRemove: () => void }) {
   return (
-    <span className={`tag ${styles.topicChip}`}>
+    <span className="topic-chip">
       {topic.name}
       <button type="button" aria-label={`Not required in ${topic.name}`} onClick={onRemove}>
         ×

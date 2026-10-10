@@ -109,6 +109,14 @@ export default function PageView() {
         )}
         {action.error && <p className="alert error">{action.error}</p>}
 
+        <PageMeta
+          org={org.slug}
+          api={api}
+          page={page}
+          onChange={setPage}
+          parts={['tags']}
+          className={styles.tags}
+        />
         <header className={styles.header}>
           <h1>{shown.title}</h1>
           <div className="row">
@@ -149,7 +157,13 @@ export default function PageView() {
             History
           </Link>
         </p>
-        <PageMeta org={org.slug} api={api} page={page} onChange={setPage} />
+        <PageMeta
+          org={org.slug}
+          api={api}
+          page={page}
+          onChange={setPage}
+          parts={['topics', 'categories']}
+        />
 
         {shown.body_md.trim() ? (
           <MarkdownView markdown={shown.body_md} onHeadings={setHeadings} />

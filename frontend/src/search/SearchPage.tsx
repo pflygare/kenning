@@ -165,7 +165,7 @@ function Search() {
         <div className={`chips ${styles.topics}`} aria-label="Matching topics">
           <span className="muted">Topics</span>
           {shown.topics.map((topic) => (
-            <Link key={topic.id} to={topicPath(org.slug, topic)} className={styles.topic}>
+            <Link key={topic.id} to={topicPath(org.slug, topic)} className="topic-chip">
               {topic.name}
             </Link>
           ))}
@@ -213,7 +213,7 @@ function Search() {
               )}
               <div className={`chips ${styles.meta}`}>
                 {hit.topics.map((topic) => (
-                  <Link key={topic.id} to={topicPath(org.slug, topic)} className={styles.topic}>
+                  <Link key={topic.id} to={topicPath(org.slug, topic)} className="topic-chip">
                     {topic.name}
                   </Link>
                 ))}
@@ -221,7 +221,7 @@ function Search() {
                   <Link
                     key={value.id}
                     to={valueListPath(org.slug, value)}
-                    className={`tag value ${value.color}`}
+                    className={`category-value ${value.color}`}
                     title={`${value.category}: ${value.name}`}
                   >
                     {value.name}
