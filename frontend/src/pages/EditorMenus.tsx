@@ -1,6 +1,7 @@
 import type { Editor } from '@tiptap/react'
 import { type KeyboardEvent, type MouseEvent, useEffect, useRef, useState } from 'react'
-import { blockFormats, type Format, matchFormats, textFormats } from './formats'
+import { editImageText, imageSelected } from './captionedImage'
+import { blockFormats, type Format, insertFormats, matchFormats, textFormats } from './formats'
 import styles from './EditorMenus.module.css'
 
 type Point = { x: number; y: number }
@@ -164,8 +165,12 @@ export function useContextMenu(editor: Editor | null) {
     // Right-clicking the selection keeps it; anywhere else moves the cursor there.
     const { from, to } = before.current ?? editor.state.selection
     before.current = null
-    const pos = editor.view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos
-    if (pos !== undefined && (pos < from || pos > to)) editor.commands.setTextSelection(pos)
+    const found = editor.view.posAtCoords({ left: event.clientX, top: event.clientY })
+    const pos = found?.pos
+    // Right-clicking an image selects it, for the image menu.
+    if (found && found.inside >= 0 && editor.state.doc.nodeAt(found.inside)?.type.name === 'image')
+      editor.commands.setNodeSelection(found.inside)
+    else if (pos !== undefined && (pos < from || pos > to)) editor.commands.setTextSelection(pos)
     else editor.commands.setTextSelection({ from, to })
     editor.commands.focus()
     setAt({ x: event.clientX, y: event.clientY })
@@ -192,8 +197,47 @@ export function useContextMenu(editor: Editor | null) {
 
   const hasSelection = editor ? !editor.state.selection.empty : false
 
-  const menu =
-    at && editor ? (
+  const imageMenu =
+    at && editor && imageSelected(editor) ? (
+      <div
+        ref={ref}
+        className={styles.menu}
+        role="menu"
+        aria-label="Image"
+        style={{ left: at.x, top: at.y }}
+        onMouseDown={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <button type="button" role="menuitem" onClick={() => run(() => editImageText(editor, 'caption'))}>
+          <span className={styles.icon}>T</span>
+          {editor.getAttributes('image').title ? 'Edit caption…' : 'Add caption…'}
+        </button>
+        <button type="button" role="menuitem" onClick={() => run(() => editImageText(editor, 'alt'))}>
+          <span className={styles.icon}>Aa</span>
+          Alt text…
+        </button>
+        <div className={styles.separator} />
+        <button type="button" role="menuitem" onClick={() => run(() => void clipboard('cut'))}>
+          <span className={styles.icon} />
+          Cut
+        </button>
+        <button type="button" role="menuitem" onClick={() => run(() => void clipboard('copy'))}>
+          <span className={styles.icon} />
+          Copy
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => run(() => editor.chain().focus().deleteSelection().run())}
+        >
+          <span className={styles.icon} />
+          Remove image
+        </button>
+      </div>
+    ) : null
+
+  const menu = imageMenu ??
+    (at && editor ? (
       <div
         ref={ref}
         className={styles.menu}
@@ -234,6 +278,18 @@ export function useContextMenu(editor: Editor | null) {
           </button>
         ))}
         <div className={styles.separator} />
+        {insertFormats.map((format) => (
+          <button
+            key={format.id}
+            type="button"
+            role="menuitem"
+            onClick={() => run(() => format.apply(editor))}
+          >
+            <span className={styles.icon}>{format.icon}</span>
+            {format.label}
+          </button>
+        ))}
+        <div className={styles.separator} />
         <button type="button" role="menuitem" disabled={!hasSelection} onClick={() => run(() => void clipboard('cut'))}>
           <span className={styles.icon} />
           Cut
@@ -248,7 +304,7 @@ export function useContextMenu(editor: Editor | null) {
         </button>
         <p className={styles.footnote}>Shift + right-click for the browser menu</p>
       </div>
-    ) : null
+    ) : null)
 
   return { menu, onMouseDown, onContextMenu }
 }

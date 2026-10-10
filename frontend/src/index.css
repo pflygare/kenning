@@ -768,3 +768,37 @@ kbd {
 .prose .tiptap :where(h1, h2, h3) {
   scroll-margin-top: 5rem;
 }
+
+.prose .tiptap img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.prose .tiptap[contenteditable='true'] img {
+  cursor: grab;
+}
+
+.prose .tiptap img.ProseMirror-selectednode {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.prose .tiptap figure {
+  margin-inline: 0;
+  margin-bottom: 0;
+}
+
+.prose .tiptap figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.prose .tiptap figure.ProseMirror-selectednode img {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

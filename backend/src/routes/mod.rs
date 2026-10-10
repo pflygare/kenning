@@ -7,6 +7,7 @@ use crate::{AppError, AppResult, AppState};
 mod auth;
 mod categories;
 mod dev;
+mod files;
 mod invites;
 mod orgs;
 mod pages;
@@ -27,6 +28,7 @@ pub fn api() -> Router<AppState> {
         .merge(tags::routes())
         .merge(categories::routes())
         .merge(search::routes())
+        .merge(files::routes())
         .fallback(|| async { AppError::NotFound })
 }
 

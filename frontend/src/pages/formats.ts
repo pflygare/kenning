@@ -80,6 +80,14 @@ export const insertFormats: Format[] = [
     isActive: () => false,
     apply: (e) => chain(e).setHorizontalRule().run(),
   },
+  {
+    id: 'image',
+    label: 'Image…',
+    icon: '🖼',
+    keywords: ['picture', 'photo', 'img', 'upload', 'screenshot'],
+    isActive: () => false,
+    apply: (e) => e.commands.pickImage(),
+  },
 ]
 
 /** Text styles, offered by the right-click menu. */
