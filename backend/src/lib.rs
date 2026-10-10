@@ -18,6 +18,7 @@ pub mod pages;
 pub mod routes;
 pub mod search;
 pub mod tags;
+pub mod templates;
 pub mod tokens;
 pub mod topics;
 

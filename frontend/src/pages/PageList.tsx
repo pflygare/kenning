@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
-import { apiGet, apiPost, errorMessage } from '../api/client'
+import { Link, useSearchParams } from 'react-router'
+import { apiGet, errorMessage } from '../api/client'
 import type { Category } from '../api/types/Category'
-import type { CreatePageRequest } from '../api/types/CreatePageRequest'
-import type { PageDetail } from '../api/types/PageDetail'
 import type { PageSummary } from '../api/types/PageSummary'
 import type { Tag } from '../api/types/Tag'
 import { useAction } from '../hooks/useAction'
 import { useOrg } from '../routes/useOrg'
-import { pagePath } from './format'
+import NewPageButton from './NewPageButton'
 import PageRows from './PageRows'
 import styles from './PageList.module.css'
 
@@ -22,7 +20,6 @@ export default function PageList() {
 
 function Pages({ tagSlug, valueId }: { tagSlug: string | null; valueId: string | null }) {
   const org = useOrg()
-  const navigate = useNavigate()
   const [pages, setPages] = useState<PageSummary[] | null>(null)
   const [tag, setTag] = useState<Tag | null>(null)
   const [value, setValue] = useState<{ category: string; name: string; color: string } | null>(null)
@@ -54,13 +51,6 @@ function Pages({ tagSlug, valueId }: { tagSlug: string | null; valueId: string |
     }
   }, [org.slug, tagSlug, valueId])
 
-  const newPage = () =>
-    create.run(async () => {
-      const body: CreatePageRequest = { title: 'Untitled', body_md: '' }
-      const page = await apiPost<PageDetail>(`/orgs/${org.slug}/pages`, body)
-      navigate(`${pagePath(org.slug, page)}/edit`, { state: { isNew: true } })
-    })
-
   return (
     <>
       <div className="page-header">
@@ -68,9 +58,7 @@ function Pages({ tagSlug, valueId }: { tagSlug: string | null; valueId: string |
           <h1>Pages</h1>
           <p>Recently updated in {org.name}.</p>
         </div>
-        <button className="primary" disabled={create.busy} onClick={() => void newPage()}>
-          + New page
-        </button>
+        <NewPageButton org={org.slug} action={create} />
       </div>
       {valueId && (
         <div className={styles.filter}>
@@ -99,9 +87,7 @@ function Pages({ tagSlug, valueId }: { tagSlug: string | null; valueId: string |
         <div className="card empty">
           <h2>No pages yet</h2>
           <p>Write the first one: a team handbook, an onboarding guide, or meeting notes.</p>
-          <button className="primary" disabled={create.busy} onClick={() => void newPage()}>
-            Write a page
-          </button>
+          <NewPageButton org={org.slug} action={create} label="Write a page" />
         </div>
       )}
       {pages?.length === 0 && tagSlug && <p className="muted">No pages have this tag.</p>}

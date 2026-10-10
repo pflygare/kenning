@@ -232,6 +232,15 @@ pub async fn merge(
     .bind(actor_id)
     .execute(&mut *conn)
     .await?;
+    sqlx::query(
+        "INSERT INTO template_tags (org_id, template_id, tag_id)
+         SELECT org_id, template_id, $2 FROM template_tags WHERE tag_id = $1
+         ON CONFLICT DO NOTHING",
+    )
+    .bind(id)
+    .bind(into_id)
+    .execute(&mut *conn)
+    .await?;
     sqlx::query("DELETE FROM tags WHERE id = $1")
         .bind(id)
         .execute(&mut *conn)
@@ -281,14 +290,14 @@ pub async fn for_page(conn: &mut PgConnection, page_id: Uuid) -> sqlx::Result<Ve
     .await
 }
 
-/// Make the page's tags exactly `names`, creating tags that don't exist yet.
-pub async fn set_for_page(
+/// The ids of the tags called `names`, creating those that don't exist yet.
+/// At most 20, as on a page.
+pub async fn ensure(
     conn: &mut PgConnection,
     org_id: Uuid,
     actor_id: Uuid,
-    page_id: Uuid,
     names: &[String],
-) -> AppResult<Vec<TagRef>> {
+) -> AppResult<Vec<Uuid>> {
     let mut wanted: Vec<(String, String)> = Vec::new();
     for name in names {
         let (name, slug) = normalize(name)?;
@@ -333,6 +342,18 @@ pub async fn set_for_page(
         .bind(&slugs)
         .fetch_all(&mut *conn)
         .await?;
+    Ok(ids)
+}
+
+/// Make the page's tags exactly `names`, creating tags that don't exist yet.
+pub async fn set_for_page(
+    conn: &mut PgConnection,
+    org_id: Uuid,
+    actor_id: Uuid,
+    page_id: Uuid,
+    names: &[String],
+) -> AppResult<Vec<TagRef>> {
+    let ids = ensure(conn, org_id, actor_id, names).await?;
     sqlx::query("DELETE FROM page_tags WHERE page_id = $1 AND NOT (tag_id = ANY($2))")
         .bind(page_id)
         .bind(&ids)

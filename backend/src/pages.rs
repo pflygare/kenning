@@ -6,7 +6,7 @@
 //! at the draft; discarding points the draft back at what is published.
 
 use axum::http::StatusCode;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, NaiveDate, Utc};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -16,10 +16,12 @@ use uuid::Uuid;
 
 use crate::{
     AppError, AppResult,
+    accounts::User,
     audit::{self, Event},
     categories::{self, PageCategory, PageValue},
     orgs,
     tags::{self, TagRef},
+    templates,
     topics::{self, TopicRef},
 };
 
@@ -119,6 +121,19 @@ pub struct CreatePageRequest {
     pub title: String,
     #[serde(default)]
     pub body_md: String,
+    /// Start from this template instead of `body_md`; `title` is used when the
+    /// template doesn't set one.
+    #[serde(default)]
+    #[ts(optional)]
+    pub template_id: Option<Uuid>,
+    /// Topics to put the page in, on top of any the template presets.
+    #[serde(default)]
+    #[ts(optional)]
+    pub topic_ids: Option<Vec<Uuid>>,
+    /// The writer's local date (YYYY-MM-DD) for {{date}}; defaults to today in UTC.
+    #[serde(default)]
+    #[ts(optional)]
+    pub local_date: Option<String>,
 }
 
 #[derive(Debug, Deserialize, TS)]
@@ -235,17 +250,30 @@ pub async fn list(
 pub async fn create(
     conn: &mut PgConnection,
     org_id: Uuid,
-    author_id: Uuid,
+    author: &User,
     req: &CreatePageRequest,
 ) -> AppResult<String> {
-    let title = validate_title(&req.title)?;
-    validate_body(&req.body_md)?;
+    let author_id = author.id;
+    let start = match req.template_id {
+        Some(id) => {
+            let date = req
+                .local_date
+                .as_deref()
+                .and_then(|d| NaiveDate::parse_from_str(d, "%Y-%m-%d").ok())
+                .unwrap_or_else(|| Utc::now().date_naive());
+            Some(templates::start(conn, id, date, &author.name, req.title.trim()).await?)
+        }
+        None => None,
+    };
+    let title = validate_title(start.as_ref().map_or(&req.title, |s| &s.title))?;
+    let body_md = start.as_ref().map_or(&req.body_md, |s| &s.body_md);
+    validate_body(body_md)?;
     let page_id = Uuid::now_v7();
     let revision_id = Uuid::now_v7();
     let short_id = new_short_id();
     sqlx::query(
-        "INSERT INTO pages (id, org_id, short_id, slug, current_revision_id, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6)",
+        "INSERT INTO pages (id, org_id, short_id, slug, current_revision_id, created_by, template_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)",
     )
     .bind(page_id)
     .bind(org_id)
@@ -253,6 +281,7 @@ pub async fn create(
     .bind(slug_for(&title))
     .bind(revision_id)
     .bind(author_id)
+    .bind(req.template_id)
     .execute(&mut *conn)
     .await?;
     sqlx::query(
@@ -263,7 +292,7 @@ pub async fn create(
     .bind(org_id)
     .bind(page_id)
     .bind(&title)
-    .bind(&req.body_md)
+    .bind(body_md)
     .bind(author_id)
     .execute(&mut *conn)
     .await?;
@@ -274,9 +303,17 @@ pub async fn create(
             .actor(author_id)
             .object("page", page_id)
             .revision(revision_id)
-            .details(json!({"title": title})),
+            .details(json!({"title": title, "template_id": req.template_id})),
     )
     .await?;
+    let mut topic_ids = start.as_ref().map_or(vec![], |s| s.topic_ids.clone());
+    topic_ids.extend(req.topic_ids.iter().flatten());
+    if !topic_ids.is_empty() {
+        topics::set_for_page(conn, org_id, author_id, page_id, &topic_ids).await?;
+    }
+    if let Some(start) = start.filter(|s| !s.tag_names.is_empty()) {
+        tags::set_for_page(conn, org_id, author_id, page_id, &start.tag_names).await?;
+    }
     Ok(short_id)
 }
 

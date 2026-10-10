@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { apiDelete, apiPost } from '../api/client'
+import type { CreateTemplateRequest } from '../api/types/CreateTemplateRequest'
 import type { PageDetail } from '../api/types/PageDetail'
 import type { PublishRequest } from '../api/types/PublishRequest'
+import type { TemplateDetail } from '../api/types/TemplateDetail'
 import { useAction } from '../hooks/useAction'
 import { pagePath, timeAgo } from './format'
 import MarkdownView from './MarkdownView'
@@ -49,6 +51,18 @@ export default function PageView() {
       return
     void action.run(async () => setPage(await apiDelete<PageDetail>(`${api}/draft`)))
   }
+  const saveAsTemplate = () =>
+    void action.run(async () => {
+      const latest = page.draft ?? page.published!
+      const body: CreateTemplateRequest = {
+        name: latest.title,
+        body_md: latest.body_md,
+        topic_ids: page.topics.map((t) => t.id),
+        tag_names: page.tags.map((t) => t.name),
+      }
+      const template = await apiPost<TemplateDetail>(`/orgs/${org.slug}/templates`, body)
+      navigate(`/${org.slug}/templates/${template.id}`)
+    })
   const archive = () => {
     if (!window.confirm(`Archive "${shown.title}"? It disappears from the page list.`)) return
     void action.run(async () => {
@@ -111,6 +125,9 @@ export default function PageView() {
                 <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
                   Page history
                 </Link>
+                <button onClick={saveAsTemplate} disabled={action.busy}>
+                  Save as template
+                </button>
                 {page.draft && page.published && (
                   <button onClick={discard} disabled={action.busy}>
                     Discard unpublished changes

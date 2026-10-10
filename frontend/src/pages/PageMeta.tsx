@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { apiGet, apiPut, errorMessage } from '../api/client'
 import type { PageCategory } from '../api/types/PageCategory'
-import type { PageDetail } from '../api/types/PageDetail'
 import type { SetPageCategoryRequest } from '../api/types/SetPageCategoryRequest'
 import type { SetPageTagsRequest } from '../api/types/SetPageTagsRequest'
 import type { SetPageTopicsRequest } from '../api/types/SetPageTopicsRequest'
@@ -16,21 +15,24 @@ import { flatten, topicPath } from '../topics/tree'
 import styles from './PageMeta.module.css'
 
 /** The page's topics, tags and category values, editable in place. Changes apply at once, not on publish. */
-export default function PageMeta({
+export default function PageMeta<
+  T extends { topics: TopicRef[]; tags: TagRef[]; categories?: PageCategory[] },
+>({
   org,
   api,
   page,
   onChange,
 }: {
   org: string
+  /** The page's (or template's) API path; its topics and tags are set below it. */
   api: string
-  page: { topics: TopicRef[]; tags: TagRef[]; categories: PageCategory[] }
-  onChange?: (page: PageDetail) => void
+  page: T
+  onChange?: (page: T) => void
 }) {
   const topicsCtx = useTopics()
   const [topics, setTopics] = useState(page.topics)
   const [tags, setTags] = useState(page.tags)
-  const [categories, setCategories] = useState(page.categories)
+  const [categories, setCategories] = useState(page.categories ?? [])
   const [error, setError] = useState<string | null>(null)
 
   const saveTopics = async (ids: string[]) => {
@@ -40,7 +42,7 @@ export default function PageMeta({
     setTopics(known.filter((t) => ids.includes(t.id)))
     try {
       const body: SetPageTopicsRequest = { topic_ids: ids }
-      const updated = await apiPut<PageDetail>(`${api}/topics`, body)
+      const updated = await apiPut<T>(`${api}/topics`, body)
       setTopics(updated.topics)
       setError(null)
       onChange?.(updated)
@@ -54,7 +56,7 @@ export default function PageMeta({
   const saveTags = async (names: string[]) => {
     try {
       const body: SetPageTagsRequest = { names }
-      const updated = await apiPut<PageDetail>(`${api}/tags`, body)
+      const updated = await apiPut<T>(`${api}/tags`, body)
       setTags(updated.tags)
       setError(null)
       onChange?.(updated)
@@ -66,8 +68,8 @@ export default function PageMeta({
   const saveValue = async (categoryId: string, valueId: string | null) => {
     try {
       const body: SetPageCategoryRequest = { category_id: categoryId, value_id: valueId }
-      const updated = await apiPut<PageDetail>(`${api}/categories`, body)
-      setCategories(updated.categories)
+      const updated = await apiPut<T>(`${api}/categories`, body)
+      setCategories(updated.categories ?? [])
       setError(null)
       onChange?.(updated)
     } catch (err) {

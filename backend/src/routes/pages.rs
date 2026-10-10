@@ -68,7 +68,7 @@ async fn create(
     Json(req): Json<CreatePageRequest>,
 ) -> AppResult<(StatusCode, Json<PageDetail>)> {
     let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
-    let short_id = pages::create(&mut tx, ctx.org.id, ctx.user.id, &req).await?;
+    let short_id = pages::create(&mut tx, ctx.org.id, &ctx.user, &req).await?;
     let page = pages::detail(&mut tx, &short_id).await?;
     tx.commit().await?;
     Ok((StatusCode::CREATED, Json(page)))

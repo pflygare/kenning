@@ -16,6 +16,7 @@ import NewOrg from './routes/NewOrg.tsx'
 import NotFound from './routes/NotFound.tsx'
 import PageList from './pages/PageList.tsx'
 import TagsPage from './tags/TagsPage.tsx'
+import TemplatesPage from './templates/TemplatesPage.tsx'
 import CategoriesPage from './categories/CategoriesPage.tsx'
 import MyDrafts from './pages/MyDrafts.tsx'
 import ArchivedPages from './pages/ArchivedPages.tsx'
@@ -80,6 +81,11 @@ const router = createBrowserRouter([
           { path: 'search', element: <SearchPage /> },
           { path: 'drafts', element: <MyDrafts /> },
           { path: 'archive', element: <ArchivedPages /> },
+          { path: 'templates', element: <TemplatesPage /> },
+          {
+            path: 'templates/:template',
+            lazy: () => component(import('./templates/TemplateEdit.tsx')),
+          },
           { path: 'settings/members', element: <Members /> },
         ],
       },
