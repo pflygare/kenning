@@ -17,6 +17,8 @@ import NotFound from './routes/NotFound.tsx'
 import PageList from './pages/PageList.tsx'
 import TagsPage from './tags/TagsPage.tsx'
 import CategoriesPage from './categories/CategoriesPage.tsx'
+import MyDrafts from './pages/MyDrafts.tsx'
+import SearchPage from './search/SearchPage.tsx'
 import TopicView from './topics/TopicView.tsx'
 import OrgLayout from './routes/OrgLayout.tsx'
 import ResetPassword from './routes/ResetPassword.tsx'
@@ -69,6 +71,8 @@ const router = createBrowserRouter([
           { path: 't/:topic', element: <TopicView /> },
           { path: 'tags', element: <TagsPage /> },
           { path: 'categories', element: <CategoriesPage /> },
+          { path: 'search', element: <SearchPage /> },
+          { path: 'drafts', element: <MyDrafts /> },
           { path: 'settings/members', element: <Members /> },
         ],
       },

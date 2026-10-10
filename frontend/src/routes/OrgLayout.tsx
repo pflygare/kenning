@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useParams } from 'react-router'
 import { useAuth } from '../auth/context'
+import QuickOpen, { SearchIcon } from '../search/QuickOpen'
 import { TopicsContext } from '../topics/context'
 import NewTopicForm from '../topics/NewTopicForm'
 import TopicTree from '../topics/TopicTree'
@@ -17,6 +18,18 @@ export default function OrgLayout() {
   const context = useTopicList(slug ?? '')
   const { topics } = context
   const [adding, setAdding] = useState(false)
+  const [quickOpen, setQuickOpen] = useState(false)
+
+  useEffect(() => {
+    const open = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setQuickOpen((was) => !was)
+      }
+    }
+    document.addEventListener('keydown', open)
+    return () => document.removeEventListener('keydown', open)
+  }, [])
 
   if (!org) {
     return <NotFound />
@@ -34,9 +47,18 @@ export default function OrgLayout() {
             <span className={styles.orgIcon}>{org.name[0]?.toUpperCase()}</span>
             <span className={styles.orgName}>{org.name}</span>
           </div>
+          <button type="button" className={styles.search} onClick={() => setQuickOpen(true)}>
+            <SearchIcon />
+            Search
+            <kbd className={styles.shortcut}>{isMac ? '⌘K' : 'Ctrl K'}</kbd>
+          </button>
           <NavLink to={home} className={() => link({ isActive: onPages })}>
             <HomeIcon />
             Pages
+          </NavLink>
+          <NavLink to={`${home}/drafts`} className={link}>
+            <DraftIcon />
+            My drafts
           </NavLink>
           <NavLink to={`${home}/tags`} className={link}>
             <TagIcon />
@@ -78,8 +100,20 @@ export default function OrgLayout() {
         <main className={styles.content}>
           <Outlet context={org} />
         </main>
+        {quickOpen && <QuickOpen org={org.slug} onClose={() => setQuickOpen(false)} />}
       </div>
     </TopicsContext.Provider>
+  )
+}
+
+const isMac = typeof navigator !== 'undefined' && navigator.platform.startsWith('Mac')
+
+function DraftIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="m13.5 6.5 4 4" />
+    </svg>
   )
 }
 

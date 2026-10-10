@@ -119,6 +119,32 @@
   color: var(--brand);
 }
 
+.search {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.625rem;
+  height: 2.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 450;
+}
+
+.search:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.shortcut {
+  margin-left: auto;
+  font-size: 0.7rem;
+}
+
 .content {
   flex: 1;
   min-width: 0;
