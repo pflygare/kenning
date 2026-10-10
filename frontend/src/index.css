@@ -4,6 +4,8 @@
   --bg: #f6f8fb;
   --surface: #ffffff;
   --surface-muted: #f1f5f9;
+  /* Floating panels that sit over cards, like the "+N" chip list. */
+  --surface-raised: #ffffff;
   --text: #0f172a;
   --text-muted: #64748b;
   --border: #e2e8f0;
@@ -21,6 +23,7 @@
   --radius-lg: 12px;
   --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
   --shadow: 0 1px 3px rgb(15 23 42 / 8%), 0 8px 24px rgb(15 23 42 / 6%);
+  --shadow-lg: 0 2px 6px rgb(15 23 42 / 10%), 0 16px 40px rgb(15 23 42 / 16%);
   --focus: 0 0 0 3px rgb(37 99 235 / 25%);
 
   font-family:
@@ -39,6 +42,8 @@
     --bg: #0b1120;
     --surface: #111a2e;
     --surface-muted: #16213a;
+  --surface-raised: #1f2c4a;
+    --surface-raised: #1f2c4a;
     --text: #e2e8f0;
     --text-muted: #94a3b8;
     --border: #1e2a44;
@@ -54,6 +59,8 @@
     --logo-light: #3b82f6;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
     --shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 25%);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 40%), 0 16px 40px rgb(0 0 0 / 55%);
+    --shadow-lg: 0 2px 6px rgb(0 0 0 / 40%), 0 16px 40px rgb(0 0 0 / 55%);
   }
 }
 
@@ -62,6 +69,7 @@
   --bg: #0b1120;
   --surface: #111a2e;
   --surface-muted: #16213a;
+  --surface-raised: #1f2c4a;
   --text: #e2e8f0;
   --text-muted: #94a3b8;
   --border: #1e2a44;
@@ -77,6 +85,7 @@
   --logo-light: #3b82f6;
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
   --shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 25%);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 40%), 0 16px 40px rgb(0 0 0 / 55%);
 }
 
 * {

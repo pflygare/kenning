@@ -65,10 +65,10 @@
   width: max-content;
   max-width: 18rem;
   padding: 0.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg);
 }
 
 /* A bridge over the gap, so moving the pointer into the panel keeps it open. */
