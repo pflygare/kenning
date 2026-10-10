@@ -108,6 +108,9 @@ export default function PageView() {
                 ⋯
               </summary>
               <div className={styles.menu}>
+                <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
+                  Page history
+                </Link>
                 {page.draft && page.published && (
                   <button onClick={discard} disabled={action.busy}>
                     Discard unpublished changes
@@ -124,6 +127,10 @@ export default function PageView() {
           {page.published
             ? `Published by ${page.published_by_name} · ${timeAgo(page.published_at!)}`
             : `Started by ${shown.author_name} · ${timeAgo(page.created_at)}`}
+          {' · '}
+          <Link className={styles.historyLink} to={`${here}/history`}>
+            History
+          </Link>
         </p>
         <PageMeta org={org.slug} api={api} page={page} onChange={setPage} />
 

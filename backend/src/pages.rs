@@ -169,7 +169,7 @@ pub fn new_short_id() -> String {
         .collect()
 }
 
-fn stale() -> AppError {
+pub(crate) fn stale() -> AppError {
     AppError::coded(
         StatusCode::CONFLICT,
         "stale_draft",
@@ -281,15 +281,15 @@ pub async fn create(
 }
 
 #[derive(FromRow)]
-struct PageRow {
-    id: Uuid,
-    short_id: String,
-    slug: String,
-    current_revision_id: Uuid,
-    published_revision_id: Option<Uuid>,
-    published_at: Option<DateTime<Utc>>,
-    published_by_name: Option<String>,
-    created_at: DateTime<Utc>,
+pub(crate) struct PageRow {
+    pub id: Uuid,
+    pub short_id: String,
+    pub slug: String,
+    pub current_revision_id: Uuid,
+    pub published_revision_id: Option<Uuid>,
+    pub published_at: Option<DateTime<Utc>>,
+    pub published_by_name: Option<String>,
+    pub created_at: DateTime<Utc>,
 }
 
 /// The page's id, for changes that don't touch its content.
@@ -297,7 +297,11 @@ pub async fn id_of(conn: &mut PgConnection, short_id: &str) -> AppResult<Uuid> {
     Ok(find(conn, short_id, true).await?.id)
 }
 
-async fn find(conn: &mut PgConnection, short_id: &str, lock: bool) -> AppResult<PageRow> {
+pub(crate) async fn find(
+    conn: &mut PgConnection,
+    short_id: &str,
+    lock: bool,
+) -> AppResult<PageRow> {
     let sql = if lock {
         "SELECT p.id, p.short_id, p.slug, p.current_revision_id, p.published_revision_id,
                 p.published_at, NULL::text AS published_by_name, p.created_at
@@ -315,7 +319,7 @@ async fn find(conn: &mut PgConnection, short_id: &str, lock: bool) -> AppResult<
         .ok_or(AppError::NotFound)
 }
 
-async fn version(conn: &mut PgConnection, revision_id: Uuid) -> sqlx::Result<Version> {
+pub(crate) async fn version(conn: &mut PgConnection, revision_id: Uuid) -> sqlx::Result<Version> {
     sqlx::query_as(
         "SELECT r.id AS revision_id, r.title, r.body_md, u.name AS author_name, r.updated_at
          FROM page_revisions r JOIN users u ON u.id = r.author_id
@@ -452,6 +456,14 @@ pub async fn publish(
     .bind(slug_for(&title))
     .execute(&mut *conn)
     .await?;
+    sqlx::query(
+        "UPDATE page_revisions SET published_at = now(), published_by = $2
+         WHERE id = $1 AND published_at IS NULL",
+    )
+    .bind(revision_id)
+    .bind(actor_id)
+    .execute(&mut *conn)
+    .await?;
     audit::record(
         conn,
         Event::new("page.published")
@@ -487,6 +499,16 @@ pub async fn discard_draft(
         .bind(published)
         .execute(&mut *conn)
         .await?;
+    // Every revision of the draft goes: those started since the live version.
+    sqlx::query(
+        "UPDATE page_revisions SET discarded_at = now()
+         WHERE page_id = $1 AND published_at IS NULL AND discarded_at IS NULL
+           AND created_at > (SELECT created_at FROM page_revisions WHERE id = $2)",
+    )
+    .bind(page.id)
+    .bind(published)
+    .execute(&mut *conn)
+    .await?;
     audit::record(
         conn,
         Event::new("page.draft_discarded")
@@ -506,8 +528,9 @@ pub async fn archive(
     short_id: &str,
 ) -> AppResult<()> {
     let page = find(conn, short_id, true).await?;
-    sqlx::query("UPDATE pages SET archived_at = now() WHERE id = $1")
+    sqlx::query("UPDATE pages SET archived_at = now(), archived_by = $2 WHERE id = $1")
         .bind(page.id)
+        .bind(actor_id)
         .execute(&mut *conn)
         .await?;
     audit::record(

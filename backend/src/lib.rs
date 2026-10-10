@@ -9,6 +9,7 @@ pub mod config;
 pub mod db;
 pub mod error;
 pub mod files;
+pub mod history;
 pub mod invites;
 pub mod jobs;
 pub mod mail;
