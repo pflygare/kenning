@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { copyLink } from './format'
 import type { Heading } from './headings'
 import styles from './Outline.module.css'
 
@@ -9,8 +10,16 @@ const READING_LINE = 96
  * The page's headings in a panel docked to the window's right edge. Follows along as you
  * scroll and jumps on click; shows nothing when there are no headings.
  */
-export default function Outline({ headings }: { headings: Heading[] }) {
+export default function Outline({
+  headings,
+  linkBase,
+}: {
+  headings: Heading[]
+  /** The page's address; each heading then gets a button that copies a link to it. */
+  linkBase?: string
+}) {
   const [current, setCurrent] = useState<string | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
 
   useEffect(() => {
     let frame = 0
@@ -38,10 +47,18 @@ export default function Outline({ headings }: { headings: Heading[] }) {
   const landed = useRef(false)
   useEffect(() => {
     if (landed.current || !headings.length) return
-    landed.current = true
     const id = decodeURIComponent(window.location.hash.slice(1))
-    headings.find((h) => h.id === id)?.element.scrollIntoView()
+    const target = headings.find((h) => h.id === id)
+    if (id && !target) return
+    landed.current = true
+    target?.element.scrollIntoView()
   }, [headings])
+
+  useEffect(() => {
+    if (!copied) return
+    const timer = window.setTimeout(() => setCopied(null), 1500)
+    return () => window.clearTimeout(timer)
+  }, [copied])
 
   if (!headings.length) return null
 
@@ -66,6 +83,20 @@ export default function Outline({ headings }: { headings: Heading[] }) {
               >
                 {h.text}
               </a>
+              {linkBase && (
+                <button
+                  type="button"
+                  className={styles.copy}
+                  title="Copy a link to this section"
+                  aria-label={`Copy a link to ${h.text}`}
+                  onClick={() => {
+                    void copyLink(`${linkBase}#${encodeURIComponent(h.id)}`)
+                    setCopied(h.id)
+                  }}
+                >
+                  {copied === h.id ? '✓' : '🔗'}
+                </button>
+              )}
             </li>
           ))}
         </ul>

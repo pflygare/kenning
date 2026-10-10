@@ -81,6 +81,14 @@ export const insertFormats: Format[] = [
     apply: (e) => chain(e).setHorizontalRule().run(),
   },
   {
+    id: 'page',
+    label: 'Link to page…',
+    icon: '↗',
+    keywords: ['link', 'page', 'reference', 'wiki', 'section'],
+    isActive: () => false,
+    apply: (e) => e.commands.openPageLinkPicker(),
+  },
+  {
     id: 'image',
     label: 'Image…',
     icon: '🖼',
