@@ -588,9 +588,9 @@ button.small {
 }
 
 /*
- * Three kinds of labels, each shaped like what it is:
+ * Three kinds of labels, each with its own shape:
  * - tags are luggage tags: a pointed end with a punched hole, in the tag's color;
- * - topics are folders: a tab on top, because a topic is where a page is filed;
+ * - topics are plain rounded chips with an outline;
  * - category values are classification stamps: square, bordered, small capitals.
  * One hue per color name; text and fill derive from it, so both themes work.
  */
@@ -629,14 +629,12 @@ a.tag:hover {
 :is(.tag, .category-value).pink { --tag: #db2777; }
 
 .topic-chip {
-  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  margin-top: 0.45rem;
-  padding: 0.1rem 0.65rem;
+  padding: 0.1rem 0.7rem;
   border: 1px solid var(--border-strong);
-  border-radius: 0 6px 6px 6px;
+  border-radius: 999px;
   background: var(--surface-muted);
   color: var(--text);
   font-size: 0.78rem;
@@ -645,27 +643,9 @@ a.tag:hover {
   white-space: nowrap;
 }
 
-/* The folder's tab. */
-.topic-chip::before {
-  content: '';
-  position: absolute;
-  left: -1px;
-  top: -0.45rem;
-  width: 1.6rem;
-  height: 0.45rem;
-  border: 1px solid var(--border-strong);
-  border-bottom: none;
-  border-radius: 5px 6px 0 0;
-  background: var(--surface-muted);
-}
-
 a.topic-chip:hover {
   border-color: var(--text-muted);
   text-decoration: none;
-}
-
-a.topic-chip:hover::before {
-  border-color: var(--text-muted);
 }
 
 .category-value {
