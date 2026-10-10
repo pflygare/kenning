@@ -9,6 +9,7 @@ pub mod config;
 pub mod db;
 pub mod error;
 pub mod files;
+pub mod history;
 pub mod invites;
 pub mod jobs;
 pub mod mail;
@@ -17,6 +18,7 @@ pub mod pages;
 pub mod routes;
 pub mod search;
 pub mod tags;
+pub mod templates;
 pub mod tokens;
 pub mod topics;
 

@@ -5,9 +5,11 @@ use axum::{
     routing::{get, post, put},
 };
 use serde::Deserialize;
+use uuid::Uuid;
 
 use crate::{
     AppResult, AppState, db,
+    history::{self, ArchivedPage, RestoreRevisionRequest, RevisionDetail, RevisionSummary},
     orgs::OrgContext,
     pages::{
         self, CreatePageRequest, ListFilter, PageDetail, PageSummary, PublishRequest,
@@ -25,6 +27,23 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/orgs/{org}/pages/{page}/publish", post(publish))
         .route("/orgs/{org}/pages/{page}/archive", post(archive))
+        .route("/orgs/{org}/pages/{page}/unarchive", post(unarchive))
+        .route("/orgs/{org}/pages/{page}/revisions", get(revisions))
+        .route(
+            "/orgs/{org}/pages/{page}/revisions/{revision}",
+            get(revision),
+        )
+        .route(
+            "/orgs/{org}/pages/{page}/revisions/{revision}/restore",
+            post(restore),
+        )
+        .route("/orgs/{org}/archive", get(archived))
+}
+
+#[derive(Deserialize)]
+struct RevisionPath {
+    page: String,
+    revision: Uuid,
 }
 
 #[derive(Deserialize)]
@@ -49,7 +68,7 @@ async fn create(
     Json(req): Json<CreatePageRequest>,
 ) -> AppResult<(StatusCode, Json<PageDetail>)> {
     let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
-    let short_id = pages::create(&mut tx, ctx.org.id, ctx.user.id, &req).await?;
+    let short_id = pages::create(&mut tx, ctx.org.id, &ctx.user, &req).await?;
     let page = pages::detail(&mut tx, &short_id).await?;
     tx.commit().await?;
     Ok((StatusCode::CREATED, Json(page)))
@@ -119,4 +138,69 @@ async fn archive(
     pages::archive(&mut tx, ctx.org.id, ctx.user.id, &path.page).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+async fn unarchive(
+    State(state): State<AppState>,
+    ctx: OrgContext,
+    Path(path): Path<PagePath>,
+) -> AppResult<Json<PageDetail>> {
+    let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
+    history::unarchive(&mut tx, ctx.org.id, ctx.user.id, &path.page).await?;
+    let page = pages::detail(&mut tx, &path.page).await?;
+    tx.commit().await?;
+    Ok(Json(page))
+}
+
+async fn archived(
+    State(state): State<AppState>,
+    ctx: OrgContext,
+) -> AppResult<Json<Vec<ArchivedPage>>> {
+    let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
+    let pages = history::archived(&mut tx).await?;
+    tx.commit().await?;
+    Ok(Json(pages))
+}
+
+async fn revisions(
+    State(state): State<AppState>,
+    ctx: OrgContext,
+    Path(path): Path<PagePath>,
+) -> AppResult<Json<Vec<RevisionSummary>>> {
+    let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
+    let revisions = history::list(&mut tx, &path.page).await?;
+    tx.commit().await?;
+    Ok(Json(revisions))
+}
+
+async fn revision(
+    State(state): State<AppState>,
+    ctx: OrgContext,
+    Path(path): Path<RevisionPath>,
+) -> AppResult<Json<RevisionDetail>> {
+    let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
+    let revision = history::revision(&mut tx, &path.page, path.revision).await?;
+    tx.commit().await?;
+    Ok(Json(revision))
+}
+
+async fn restore(
+    State(state): State<AppState>,
+    ctx: OrgContext,
+    Path(path): Path<RevisionPath>,
+    Json(req): Json<RestoreRevisionRequest>,
+) -> AppResult<Json<PageDetail>> {
+    let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
+    history::restore(
+        &mut tx,
+        ctx.org.id,
+        ctx.user.id,
+        &path.page,
+        path.revision,
+        req.base_revision_id,
+    )
+    .await?;
+    let page = pages::detail(&mut tx, &path.page).await?;
+    tx.commit().await?;
+    Ok(Json(page))
 }

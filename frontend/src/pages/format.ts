@@ -26,3 +26,19 @@ export function timeAgo(iso: string): string {
   }
   return new Date(iso).toLocaleDateString()
 }
+
+/** "10 Oct 2026, 16:59" in the reader's locale. */
+export function dateTime(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+/** "Restored from the version of 3 Oct 2026, 09:12", for revisions brought back. */
+export function restoredNote(revision: {
+  restored_from: string | null
+  restored_from_at: string | null
+}): string | null {
+  if (!revision.restored_from) return null
+  return revision.restored_from_at
+    ? `Restored from the version of ${dateTime(revision.restored_from_at)}`
+    : 'Restored from an earlier version'
+}

@@ -42,6 +42,10 @@ export default function OrgLayout() {
             <DraftIcon />
             My drafts
           </NavLink>
+          <NavLink to={`${home}/templates`} className={link}>
+            <TemplateIcon />
+            Templates
+          </NavLink>
           <NavLink to={`${home}/tags`} className={link}>
             <TagIcon />
             Tags
@@ -49,6 +53,10 @@ export default function OrgLayout() {
           <NavLink to={`${home}/categories`} className={link}>
             <ListIcon />
             Categories
+          </NavLink>
+          <NavLink to={`${home}/archive`} className={link}>
+            <ArchiveIcon />
+            Archive
           </NavLink>
           <div className={`${styles.section} ${styles.sectionRow}`}>
             Topics
@@ -118,6 +126,24 @@ function ListIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="4" width="18" height="16" rx="2" />
       <path d="M7 9h2M7 13h2M7 17h2M12 9h5M12 13h5M12 17h5" />
+    </svg>
+  )
+}
+
+function TemplateIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="3" width="16" height="18" rx="2" strokeDasharray="3 2.2" />
+      <path d="M8 8h8M8 12h8M8 16h5" />
+    </svg>
+  )
+}
+
+function ArchiveIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="5" rx="1" />
+      <path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4" />
     </svg>
   )
 }

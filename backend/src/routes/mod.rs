@@ -13,6 +13,7 @@ mod orgs;
 mod pages;
 mod search;
 mod tags;
+mod templates;
 mod topics;
 
 /// Routes mounted under `/api`.
@@ -29,6 +30,7 @@ pub fn api() -> Router<AppState> {
         .merge(categories::routes())
         .merge(search::routes())
         .merge(files::routes())
+        .merge(templates::routes())
         .fallback(|| async { AppError::NotFound })
 }
 

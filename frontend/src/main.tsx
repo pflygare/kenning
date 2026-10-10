@@ -16,8 +16,10 @@ import NewOrg from './routes/NewOrg.tsx'
 import NotFound from './routes/NotFound.tsx'
 import PageList from './pages/PageList.tsx'
 import TagsPage from './tags/TagsPage.tsx'
+import TemplatesPage from './templates/TemplatesPage.tsx'
 import CategoriesPage from './categories/CategoriesPage.tsx'
 import MyDrafts from './pages/MyDrafts.tsx'
+import ArchivedPages from './pages/ArchivedPages.tsx'
 import SearchPage from './search/SearchPage.tsx'
 import TopicView from './topics/TopicView.tsx'
 import OrgLayout from './routes/OrgLayout.tsx'
@@ -68,11 +70,22 @@ const router = createBrowserRouter([
           { path: 'p/:page', lazy: () => component(import('./pages/PageView.tsx')) },
           { path: 'p/:page/edit', lazy: () => component(import('./pages/PageEdit.tsx')) },
           { path: 'p/:page/compare', lazy: () => component(import('./pages/PageCompare.tsx')) },
+          { path: 'p/:page/history', lazy: () => component(import('./pages/PageHistory.tsx')) },
+          {
+            path: 'p/:page/history/:revision',
+            lazy: () => component(import('./pages/RevisionView.tsx')),
+          },
           { path: 't/:topic', element: <TopicView /> },
           { path: 'tags', element: <TagsPage /> },
           { path: 'categories', element: <CategoriesPage /> },
           { path: 'search', element: <SearchPage /> },
           { path: 'drafts', element: <MyDrafts /> },
+          { path: 'archive', element: <ArchivedPages /> },
+          { path: 'templates', element: <TemplatesPage /> },
+          {
+            path: 'templates/:template',
+            lazy: () => component(import('./templates/TemplateEdit.tsx')),
+          },
           { path: 'settings/members', element: <Members /> },
         ],
       },

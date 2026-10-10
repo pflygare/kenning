@@ -51,7 +51,8 @@
   box-shadow: var(--shadow);
 }
 
-.menu button {
+.menu button,
+.menu .menuLink {
   width: 100%;
   justify-content: flex-start;
   border: none;
@@ -60,6 +61,21 @@
   font-weight: 500;
 }
 
-.menu button:hover {
+.menu button:hover,
+.menu .menuLink:hover {
   background: var(--surface-muted);
+}
+
+.menu .menuLink {
+  display: flex;
+  width: 100%;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.historyLink {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 2px;
 }

@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
-import { apiGet, apiPatch, apiPost, apiPut, errorMessage } from '../api/client'
-import type { CreatePageRequest } from '../api/types/CreatePageRequest'
+import { apiGet, apiPatch, apiPost, errorMessage } from '../api/client'
 import type { MoveTopicRequest } from '../api/types/MoveTopicRequest'
-import type { PageDetail } from '../api/types/PageDetail'
 import type { Topic } from '../api/types/Topic'
 import type { TopicDetail } from '../api/types/TopicDetail'
 import type { UpdateTopicRequest } from '../api/types/UpdateTopicRequest'
 import Popover from '../components/Popover'
 import { useAction } from '../hooks/useAction'
-import { pagePath, shortIdFrom } from '../pages/format'
+import { shortIdFrom } from '../pages/format'
+import NewPageButton from '../pages/NewPageButton'
 import PageRows from '../pages/PageRows'
 import { useOrg } from '../routes/useOrg'
 import { useTopics } from './context'
@@ -84,15 +83,6 @@ function TopicView({ topicRef: ref }: { topicRef: string }) {
     })
   }
 
-  const newPage = () =>
-    action.run(async () => {
-      const body: CreatePageRequest = { title: 'Untitled', body_md: '' }
-      const page = await apiPost<PageDetail>(`/orgs/${org.slug}/pages`, body)
-      await apiPut(`/orgs/${org.slug}/pages/${page.short_id}/topics`, { topic_ids: [topic.id] })
-      void topicsCtx.reload()
-      navigate(`${pagePath(org.slug, page)}/edit`, { state: { isNew: true } })
-    })
-
   // Where it can move: anywhere but inside itself.
   const inside = subtreeIds(all, topic.id)
   const destinations = flatten(all).filter(({ topic: t }) => !inside.has(t.id))
@@ -126,9 +116,12 @@ function TopicView({ topicRef: ref }: { topicRef: string }) {
             {topic.description && <p className={styles.description}>{topic.description}</p>}
           </div>
           <div className="row">
-            <button className="primary" disabled={action.busy} onClick={() => void newPage()}>
-              + New page
-            </button>
+            <NewPageButton
+              org={org.slug}
+              topicId={topic.id}
+              action={action}
+              onCreated={() => void topicsCtx.reload()}
+            />
             <Popover label="⋯" ariaLabel="Topic actions">
               {(close) => (
                 <div role="menu">
