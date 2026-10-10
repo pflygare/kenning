@@ -187,7 +187,6 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
       {message && <p className="alert error">{message}</p>}
 
       <PageMeta org={orgSlug} api={api} page={page} parts={['tags']} className={styles.tags} />
-      <PageMeta org={orgSlug} api={api} page={page} parts={['topics']} className={styles.topics} />
       <input
         className={styles.title}
         aria-label="Title"
@@ -209,7 +208,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
           }
         }}
       />
-      <PageMeta org={orgSlug} api={api} page={page} parts={['categories']} />
+      <PageMeta org={orgSlug} api={api} page={page} parts={['topics', 'categories']} />
       {editor && <Toolbar editor={editor} />}
       <div
         onKeyDownCapture={slashMenu.onKeyDown}

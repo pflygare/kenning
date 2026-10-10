@@ -117,14 +117,6 @@ export default function PageView() {
           parts={['tags']}
           className={styles.tags}
         />
-        <PageMeta
-          org={org.slug}
-          api={api}
-          page={page}
-          onChange={setPage}
-          parts={['topics']}
-          className={styles.topics}
-        />
         <header className={styles.header}>
           <h1>{shown.title}</h1>
           <div className="row">
@@ -170,7 +162,7 @@ export default function PageView() {
           api={api}
           page={page}
           onChange={setPage}
-          parts={['categories']}
+          parts={['topics', 'categories']}
         />
 
         {shown.body_md.trim() ? (
