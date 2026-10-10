@@ -59,18 +59,22 @@ pub fn router(state: AppState) -> Router {
 /// Cross-site request forgery guard. Browsers only send a JSON content type
 /// cross-site after a CORS preflight, which this API never approves, so
 /// requiring it on every write means a write can only come from our own pages.
-/// The session cookie is also SameSite=Lax.
+/// Uploads send raw bytes instead, with an `X-Requested-With: kenning` header,
+/// which needs the same preflight. The session cookie is also SameSite=Lax.
 async fn require_json_for_writes(request: Request, next: Next) -> Response {
     let writes = !matches!(
         *request.method(),
         Method::GET | Method::HEAD | Method::OPTIONS
     );
-    let is_json = request
-        .headers()
+    let headers = request.headers();
+    let is_json = headers
         .get(header::CONTENT_TYPE)
         .and_then(|value| value.to_str().ok())
         .is_some_and(|value| value.starts_with("application/json"));
-    if writes && !is_json {
+    let is_ours = headers
+        .get("x-requested-with")
+        .is_some_and(|value| value == "kenning");
+    if writes && !is_json && !is_ours {
         return AppError::coded(
             StatusCode::UNSUPPORTED_MEDIA_TYPE,
             "json_required",

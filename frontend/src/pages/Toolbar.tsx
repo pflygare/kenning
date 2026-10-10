@@ -2,7 +2,10 @@ import { type Editor, useEditorState } from '@tiptap/react'
 import { editLink } from './formats'
 import styles from './Toolbar.module.css'
 
-/** Formatting buttons. Markdown shortcuts (`## `, `- `, `**bold**`), "/" and right-click work too. */
+/**
+ * Formatting buttons. Markdown shortcuts (`## `, `- `, `**bold**`), "/" and right-click work
+ * too, and images can also be pasted or dropped in.
+ */
 export default function Toolbar({ editor }: { editor: Editor }) {
   const state = useEditorState({
     editor,
@@ -33,6 +36,7 @@ export default function Toolbar({ editor }: { editor: Editor }) {
     ['<>', 'Inline code', state.code, () => chain().toggleCode().run()],
     ['{ }', 'Code block', state.codeBlock, () => chain().toggleCodeBlock().run()],
     ['🔗', 'Link', state.link, () => editLink(editor)],
+    ['🖼', 'Image', false, () => editor.commands.pickImage()],
   ]
 
   return (

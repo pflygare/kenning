@@ -768,3 +768,20 @@ kbd {
 .prose .tiptap :where(h1, h2, h3) {
   scroll-margin-top: 5rem;
 }
+
+.prose .tiptap img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.prose .tiptap[contenteditable='true'] img {
+  cursor: grab;
+}
+
+.prose .tiptap img.ProseMirror-selectednode {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}

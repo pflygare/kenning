@@ -1,6 +1,6 @@
 import type { Editor } from '@tiptap/react'
 import { type KeyboardEvent, type MouseEvent, useEffect, useRef, useState } from 'react'
-import { blockFormats, type Format, matchFormats, textFormats } from './formats'
+import { blockFormats, type Format, insertFormats, matchFormats, textFormats } from './formats'
 import styles from './EditorMenus.module.css'
 
 type Point = { x: number; y: number }
@@ -227,6 +227,18 @@ export function useContextMenu(editor: Editor | null) {
             role="menuitemradio"
             aria-checked={format.isActive(editor)}
             className={format.isActive(editor) ? styles.active : undefined}
+            onClick={() => run(() => format.apply(editor))}
+          >
+            <span className={styles.icon}>{format.icon}</span>
+            {format.label}
+          </button>
+        ))}
+        <div className={styles.separator} />
+        {insertFormats.map((format) => (
+          <button
+            key={format.id}
+            type="button"
+            role="menuitem"
             onClick={() => run(() => format.apply(editor))}
           >
             <span className={styles.icon}>{format.icon}</span>

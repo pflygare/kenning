@@ -8,6 +8,7 @@ pub mod categories;
 pub mod config;
 pub mod db;
 pub mod error;
+pub mod files;
 pub mod invites;
 pub mod jobs;
 pub mod mail;

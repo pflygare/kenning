@@ -105,6 +105,33 @@ impl Browser {
         (status, json)
     }
 
+    /// Send raw bytes with extra headers; returns the status, headers and body bytes.
+    pub async fn raw(
+        &mut self,
+        method: Method,
+        uri: &str,
+        headers: &[(&str, &str)],
+        body: Vec<u8>,
+    ) -> (StatusCode, axum::http::HeaderMap, Vec<u8>) {
+        let mut builder = Request::builder().method(method).uri(uri);
+        if let Some(session) = &self.session {
+            builder = builder.header(header::COOKIE, format!("kenning_session={session}"));
+        }
+        for (name, value) in headers {
+            builder = builder.header(*name, *value);
+        }
+        let response = self
+            .app
+            .clone()
+            .oneshot(builder.body(Body::from(body)).unwrap())
+            .await
+            .unwrap();
+        let status = response.status();
+        let headers = response.headers().clone();
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        (status, headers, bytes.to_vec())
+    }
+
     pub async fn get(&mut self, uri: &str) -> (StatusCode, Value) {
         self.request(Method::GET, uri, None).await
     }

@@ -61,6 +61,24 @@ async function request<T>(
   return (await res.json()) as T
 }
 
+/**
+ * Upload a file as the raw request body. The header stands in for the JSON
+ * content type the server otherwise requires on writes (CSRF protection).
+ */
+export async function apiUpload<T>(path: string, file: Blob, name: string): Promise<T> {
+  const res = await fetch(`/api${path}?name=${encodeURIComponent(name)}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': file.type || 'application/octet-stream',
+      'X-Requested-With': 'kenning',
+    },
+    body: file,
+  })
+  if (!res.ok) throw await toApiError(res)
+  return (await res.json()) as T
+}
+
 async function toApiError(res: Response): Promise<ApiError> {
   try {
     const body = (await res.json()) as ErrorBody

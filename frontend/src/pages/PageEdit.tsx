@@ -10,6 +10,7 @@ import { useContextMenu, useSlashMenu } from './EditorMenus'
 import { extensions } from './editorExtensions'
 import { pagePath } from './format'
 import { useHeadings } from './headings'
+import { ImageUpload } from './imageUpload'
 import Outline from './Outline'
 import PageMeta from './PageMeta'
 import styles from './PageEdit.module.css'
@@ -35,6 +36,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
   const [title, setTitle] = useState(isNew ? '' : start.title)
   const [state, setState] = useState<SaveState>('saved')
   const [message, setMessage] = useState<string | null>(null)
+  const [uploads, setUploads] = useState(0)
 
   // The revision the next save builds on, and whether edits are waiting.
   const base = useRef(start.revision_id)
@@ -46,7 +48,14 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
   const saveRef = useRef<() => Promise<void>>(async () => {})
 
   const editor = useEditor({
-    extensions: extensions('Write something, or type / for headings, lists and more…'),
+    extensions: [
+      ...extensions('Write something, or type / for headings, lists and more…'),
+      ImageUpload.configure({
+        org: orgSlug,
+        onUploading: (change) => setUploads((n) => n + change),
+        onError: setMessage,
+      }),
+    ],
     content: start.body_md,
     contentType: 'markdown',
     autofocus: isNew ? false : 'end',
@@ -135,23 +144,31 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
     }
   }
 
-  const status = {
+  const saveStatus = {
     saved: 'Saved',
     dirty: 'Unsaved changes',
     saving: 'Saving…',
     conflict: 'Not saved',
     error: 'Not saved',
   }[state]
+  const status =
+    uploads === 0 ? saveStatus : uploads === 1 ? 'Uploading image…' : `Uploading ${uploads} images…`
 
   return (
     <div className={styles.editor}>
       <div className={styles.bar}>
         <span className={`muted ${styles.status}`} aria-live="polite">
-          <span className={`${styles.dot} ${styles[state]}`} /> {status}
+          <span className={`${styles.dot} ${styles[uploads > 0 ? 'saving' : state]}`} /> {status}
         </span>
         <div className="row">
-          <button onClick={() => void done()}>Done</button>
-          <button className="primary" disabled={state === 'conflict'} onClick={() => void publish()}>
+          <button disabled={uploads > 0} onClick={() => void done()}>
+            Done
+          </button>
+          <button
+            className="primary"
+            disabled={state === 'conflict' || uploads > 0}
+            onClick={() => void publish()}
+          >
             Publish
           </button>
         </div>
