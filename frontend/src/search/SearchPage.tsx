@@ -87,9 +87,7 @@ function Search() {
         <div>
           <h1>Search</h1>
           <p>
-            Results update as you type; every word matches the start of a word in a title, body or tag. Press{' '}
-            <kbd>{navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl'}</kbd> <kbd>K</kbd> anywhere to find a
-            page from any screen.
+            Results update as you type; every word matches the start of a word in a title, body or tag.
           </p>
         </div>
       </div>

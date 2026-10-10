@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { NavLink, Outlet, useLocation, useParams } from 'react-router'
 import { useAuth } from '../auth/context'
-import QuickOpen, { SearchIcon } from '../search/QuickOpen'
 import { TopicsContext } from '../topics/context'
 import NewTopicForm from '../topics/NewTopicForm'
 import TopicTree from '../topics/TopicTree'
@@ -18,18 +17,6 @@ export default function OrgLayout() {
   const context = useTopicList(slug ?? '')
   const { topics } = context
   const [adding, setAdding] = useState(false)
-  const [quickOpen, setQuickOpen] = useState(false)
-
-  useEffect(() => {
-    const open = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
-        setQuickOpen((was) => !was)
-      }
-    }
-    document.addEventListener('keydown', open)
-    return () => document.removeEventListener('keydown', open)
-  }, [])
 
   if (!org) {
     return <NotFound />
@@ -47,11 +34,6 @@ export default function OrgLayout() {
             <span className={styles.orgIcon}>{org.name[0]?.toUpperCase()}</span>
             <span className={styles.orgName}>{org.name}</span>
           </div>
-          <button type="button" className={styles.search} onClick={() => setQuickOpen(true)}>
-            <SearchIcon />
-            Search
-            <kbd className={styles.shortcut}>{isMac ? '⌘K' : 'Ctrl K'}</kbd>
-          </button>
           <NavLink to={home} className={() => link({ isActive: onPages })}>
             <HomeIcon />
             Pages
@@ -100,13 +82,10 @@ export default function OrgLayout() {
         <main className={styles.content}>
           <Outlet context={org} />
         </main>
-        {quickOpen && <QuickOpen org={org.slug} onClose={() => setQuickOpen(false)} />}
       </div>
     </TopicsContext.Provider>
   )
 }
-
-const isMac = typeof navigator !== 'undefined' && navigator.platform.startsWith('Mac')
 
 function DraftIcon() {
   return (

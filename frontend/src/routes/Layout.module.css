@@ -8,9 +8,10 @@
   position: sticky;
   top: 0;
   z-index: 5;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 34rem) minmax(0, 1fr);
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   height: 3.5rem;
   padding: 0 1.25rem;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
@@ -45,8 +46,29 @@
   background: var(--surface-muted);
 }
 
-.spacer {
-  flex: 1;
+.left,
+.right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.right {
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+  }
+
+  .separator,
+  .orgs {
+    display: none;
+  }
 }
 
 .testing {
