@@ -53,6 +53,14 @@ Then open http://localhost:5173 and create an account. Set `PUBLIC_URL=http://lo
 
 Without `SMTP_URL`, emails (confirmation, password reset, invitations) are printed in the backend's log. For local testing, set `DEV_TOOLS=true` to get a Testing page at `/dev` that lists every email with clickable links and can confirm your email in one click. Never turn it on where real people sign up. Google sign-in appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (see `.env.example`).
 
+For realistic test content, import a few Wikipedia articles (long text with section headings) as published pages in a Wikipedia topic. It asks for your password and skips articles that are already there:
+
+```sh
+node scripts/import-wikipedia.mjs --email you@example.com --org your-org-slug
+```
+
+Name articles as extra arguments, or pass `--lang sv` for Swedish Wikipedia.
+
 In production the backend serves the built frontend too: run `npm run build` and set `STATIC_DIR=../frontend/dist`.
 
 ## How the backend is organized
