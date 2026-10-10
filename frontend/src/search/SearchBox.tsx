@@ -158,7 +158,7 @@ export default function SearchBox({ org }: { org: string }) {
                 role="option"
                 aria-selected={i === index}
                 className={`${styles.option} ${i === index ? styles.selected : ''}`}
-                onMouseEnter={() => setIndex(i)}
+                onMouseMove={() => setIndex(i)}
                 onClick={() => go(option)}
               >
                 <span className={styles.icon} aria-hidden="true">

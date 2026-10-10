@@ -9,7 +9,7 @@
   top: 0;
   z-index: 5;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 34rem) minmax(0, 1fr);
+  grid-template-columns: minmax(max-content, 1fr) minmax(14rem, 44rem) minmax(max-content, 1fr);
   align-items: center;
   gap: 1rem;
   height: 3.5rem;
