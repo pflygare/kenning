@@ -761,6 +761,7 @@ kbd {
 /* A page with its outline beside it gets a little more room than other screens. */
 main:has(> .with-outline) {
   max-width: 66rem;
+  container-type: inline-size;
 }
 
 .prose .tiptap :where(h1, h2, h3) {

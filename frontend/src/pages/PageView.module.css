@@ -14,8 +14,8 @@
   height: 100%;
 }
 
-/* No room beside the page: the page takes the width and the outline steps aside. */
-@media (max-width: 1180px) {
+/* No room beside the page (the space, not the window, decides): the outline steps aside. */
+@container (max-width: 46rem) {
   .layout {
     grid-template-columns: minmax(0, 46rem);
   }

@@ -133,7 +133,7 @@ export default function PageView() {
           <p className="muted">This page is empty.</p>
         )}
       </article>
-      {shown.body_md.trim() && headings.length > 1 && (
+      {shown.body_md.trim() && headings.length > 0 && (
         <aside className={styles.aside}>
           <Outline headings={headings} />
         </aside>
