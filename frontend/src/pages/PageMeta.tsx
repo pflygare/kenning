@@ -11,7 +11,8 @@ import type { TopicRef } from '../api/types/TopicRef'
 import Popover from '../components/Popover'
 import TagChip from '../tags/TagChip'
 import { useTopics } from '../topics/context'
-import { flatten, topicPath } from '../topics/tree'
+import TopicChecklist from '../topics/TopicChecklist'
+import { topicPath } from '../topics/tree'
 import styles from './PageMeta.module.css'
 
 /** The page's topics, tags and category values, editable in place. Changes apply at once, not on publish. */
@@ -101,27 +102,12 @@ export default function PageMeta<
             align="left"
           >
             {() => (
-              <div role="group" aria-label="Topics for this page">
-                {topicsCtx.topics?.length === 0 && (
-                  <p className={`muted ${styles.empty}`}>
-                    No topics yet. Create one with + next to Topics in the sidebar.
-                  </p>
-                )}
-                {flatten(topicsCtx.topics ?? []).map(({ topic, depth }) => (
-                  <label
-                    key={topic.id}
-                    className={`menu-item ${styles.check}`}
-                    style={{ paddingLeft: `${0.625 + depth * 1}rem` }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={topicIds.includes(topic.id)}
-                      onChange={() => toggleTopic(topic.id)}
-                    />
-                    {topic.name}
-                  </label>
-                ))}
-              </div>
+              <TopicChecklist
+                topics={topicsCtx.topics ?? []}
+                checked={topicIds}
+                onToggle={toggleTopic}
+                label="Topics for this page"
+              />
             )}
           </Popover>
         </div>

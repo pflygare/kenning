@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { TopicRef } from '../api/types/TopicRef'
 import Popover from '../components/Popover'
 import { useTopics } from '../topics/context'
-import { flatten } from '../topics/tree'
+import TopicChecklist from '../topics/TopicChecklist'
 import styles from './CategoriesPage.module.css'
 
 export type Requirement = { everywhere: boolean; topicIds: string[] }
@@ -63,27 +63,12 @@ export default function RequirementPicker({
             align="left"
           >
             {() => (
-              <div role="group" aria-label="Topics where it's required">
-                {topics?.length === 0 && (
-                  <p className={`muted ${styles.empty}`}>
-                    No topics yet. Create one with + next to Topics in the sidebar.
-                  </p>
-                )}
-                {flatten(topics ?? []).map(({ topic, depth }) => (
-                  <label
-                    key={topic.id}
-                    className={`menu-item ${styles.check}`}
-                    style={{ paddingLeft: `${0.625 + depth}rem` }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={value.topicIds.includes(topic.id)}
-                      onChange={() => toggle(topic.id)}
-                    />
-                    {topic.name}
-                  </label>
-                ))}
-              </div>
+              <TopicChecklist
+                topics={topics ?? []}
+                checked={value.topicIds}
+                onToggle={toggle}
+                label="Topics where it's required"
+              />
             )}
           </Popover>
           {chosen.length > 0 && <span className="hint">and their sub-topics</span>}

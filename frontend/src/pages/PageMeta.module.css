@@ -12,24 +12,7 @@
   font-weight: 500;
 }
 
-.check {
-  gap: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-}
 
-.check input {
-  width: 1rem;
-  height: 1rem;
-  margin: 0;
-  accent-color: var(--brand);
-}
-
-.empty {
-  margin: 0.5rem 0.625rem;
-  font-size: 0.85rem;
-  white-space: normal;
-}
 
 .tagInput {
   position: relative;

@@ -74,25 +74,7 @@
   font-size: 0.875rem;
 }
 
-.check {
-  gap: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 400;
-}
 
-.check input {
-  width: 1rem;
-  height: 1rem;
-  margin: 0;
-  accent-color: var(--brand);
-}
-
-.empty {
-  margin: 0.5rem 0.625rem;
-  font-size: 0.85rem;
-  white-space: normal;
-}
 
 .missing {
   margin: 0;
