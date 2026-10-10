@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import type { Topic } from '../api/types/Topic'
-import { ancestorIds, flatten } from './tree'
+import { ancestorIds, childrenOf, flatten } from './tree'
 import styles from './TopicChecklist.module.css'
+
+/** How far each level is indented, in rem: enough for a checkbox and its connector. */
+const INDENT = 1.5
 
 /**
  * Topics to tick, one per line, with a search field on top. The whole tree shows
- * indented; typing narrows it to matching topics, each with its parent path.
+ * indented, with lines joining sub-topics to their parent; typing narrows it to
+ * matching topics, each with its parent path.
  */
 export default function TopicChecklist({
   topics,
@@ -25,6 +29,18 @@ export default function TopicChecklist({
   const rows = flatten(topics).filter(
     ({ topic }) => !words.length || words.every((w) => topic.name.toLowerCase().includes(w)),
   )
+  // A topic is its parent's last child when no sibling follows it; the lines stop there.
+  const isLast = (topic: Topic) => childrenOf(topics, topic.parent_id).at(-1)?.id === topic.id
+  /** The tree lines left of a topic at `depth`: one column per level above it. */
+  const guides = (topic: Topic, depth: number) => {
+    const chain = [topic, ...ancestorIds(topics, topic.id).map((id) => byId.get(id)!)]
+    // chain[k] sits at depth (depth - k); column c holds the line for the level-c+1 node.
+    return Array.from({ length: depth }, (_, column) => {
+      const node = chain[depth - 1 - column]
+      if (column === depth - 1) return isLast(node) ? 'elbow' : 'tee'
+      return isLast(node) ? 'blank' : 'line'
+    })
+  }
   const path = (topic: Topic) =>
     ancestorIds(topics, topic.id)
       .reverse()
@@ -65,9 +81,18 @@ export default function TopicChecklist({
           <label
             key={topic.id}
             className={`${styles.row} ${i === active && words.length ? styles.active : ''}`}
-            style={{ paddingLeft: `${0.625 + (words.length ? 0 : depth) * 1.1}rem` }}
+            style={{ paddingLeft: `${0.625 + (words.length ? 0 : depth) * INDENT}rem` }}
             onMouseEnter={() => setActive(i)}
           >
+            {!words.length &&
+              guides(topic, depth).map((kind, column) => (
+                <span
+                  key={column}
+                  className={`${styles.guide} ${styles[kind]}`}
+                  style={{ left: `${0.625 + column * INDENT}rem` }}
+                  aria-hidden="true"
+                />
+              ))}
             <input
               type="checkbox"
               checked={checked.includes(topic.id)}

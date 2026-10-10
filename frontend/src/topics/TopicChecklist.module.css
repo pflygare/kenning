@@ -17,6 +17,7 @@
 }
 
 .row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -58,4 +59,44 @@
   margin: 0.5rem 0.625rem;
   font-size: 0.85rem;
   white-space: normal;
+}
+
+/* Tree lines, centered under the parent's checkbox (1rem wide). */
+.guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1rem;
+  pointer-events: none;
+}
+
+.line::before,
+.tee::before,
+.elbow::before {
+  content: '';
+  position: absolute;
+  left: calc(0.5rem - 0.5px);
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--border-strong);
+}
+
+.elbow::before {
+  bottom: 50%;
+}
+
+/* Reach up to the parent's checkbox, across the space above the row's own. */
+.tee::before,
+.elbow::before {
+  top: -0.6rem;
+}
+
+.tee::after,
+.elbow::after {
+  content: '';
+  position: absolute;
+  left: calc(0.5rem - 0.5px);
+  top: 50%;
+  width: 0.85rem;
+  border-top: 1px solid var(--border-strong);
 }
