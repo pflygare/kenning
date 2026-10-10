@@ -11,7 +11,8 @@ import type { TopicRef } from '../api/types/TopicRef'
 import Popover from '../components/Popover'
 import TagChip from '../tags/TagChip'
 import { useTopics } from '../topics/context'
-import { flatten, topicPath } from '../topics/tree'
+import TopicChecklist from '../topics/TopicChecklist'
+import { topicPath } from '../topics/tree'
 import styles from './PageMeta.module.css'
 
 /** The page's topics, tags and category values, editable in place. Changes apply at once, not on publish. */
@@ -22,12 +23,17 @@ export default function PageMeta<
   api,
   page,
   onChange,
+  parts = ['topics', 'tags', 'categories'],
+  className,
 }: {
   org: string
   /** The page's (or template's) API path; its topics and tags are set below it. */
   api: string
   page: T
   onChange?: (page: T) => void
+  /** Which of them to show here; a page shows tags above its title and the rest below. */
+  parts?: ('topics' | 'tags' | 'categories')[]
+  className?: string
 }) {
   const topicsCtx = useTopics()
   const [topics, setTopics] = useState(page.topics)
@@ -82,60 +88,48 @@ export default function PageMeta<
     void saveTopics(topicIds.includes(id) ? topicIds.filter((t) => t !== id) : [...topicIds, id])
 
   return (
-    <div className={styles.meta}>
-      <div className="chips" aria-label="Topics">
-        {topics.map((topic) => (
-          <Link key={topic.id} className={styles.topic} to={topicPath(org, topic)}>
-            <FolderIcon />
-            {topic.name}
-          </Link>
-        ))}
-        <Popover
-          label={topics.length ? 'Topics…' : '+ Add to topic'}
-          triggerClass={`small ghost ${styles.add}`}
-          align="left"
-        >
-          {() => (
-            <div role="group" aria-label="Topics for this page">
-              {topicsCtx.topics?.length === 0 && (
-                <p className={`muted ${styles.empty}`}>
-                  No topics yet. Create one with + next to Topics in the sidebar.
-                </p>
-              )}
-              {flatten(topicsCtx.topics ?? []).map(({ topic, depth }) => (
-                <label
-                  key={topic.id}
-                  className={`menu-item ${styles.check}`}
-                  style={{ paddingLeft: `${0.625 + depth * 1}rem` }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={topicIds.includes(topic.id)}
-                    onChange={() => toggleTopic(topic.id)}
-                  />
-                  {topic.name}
-                </label>
-              ))}
-            </div>
-          )}
-        </Popover>
-      </div>
-      <div className="chips" aria-label="Tags">
-        {tags.map((tag) => (
-          <TagChip
-            key={tag.id}
+    <div className={`${styles.meta} ${className ?? ''}`}>
+      {parts.includes('topics') && (
+        <div className="chips" aria-label="Topics">
+          {topics.map((topic) => (
+            <Link key={topic.id} className="topic-chip" to={topicPath(org, topic)}>
+              {topic.name}
+            </Link>
+          ))}
+          <Popover
+            label={topics.length ? 'Topics…' : '+ Add to topic'}
+            triggerClass={`small ghost ${styles.add}`}
+            align="left"
+          >
+            {() => (
+              <TopicChecklist
+                topics={topicsCtx.topics ?? []}
+                checked={topicIds}
+                onToggle={toggleTopic}
+                label="Topics for this page"
+              />
+            )}
+          </Popover>
+        </div>
+      )}
+      {parts.includes('tags') && (
+        <div className="chips" aria-label="Tags">
+          {tags.map((tag) => (
+            <TagChip
+              key={tag.id}
+              org={org}
+              tag={tag}
+              onRemove={() => void saveTags(tags.filter((t) => t.id !== tag.id).map((t) => t.name))}
+            />
+          ))}
+          <TagInput
             org={org}
-            tag={tag}
-            onRemove={() => void saveTags(tags.filter((t) => t.id !== tag.id).map((t) => t.name))}
+            taken={tags.map((t) => t.slug)}
+            onAdd={(name) => saveTags([...tags.map((t) => t.name), name])}
           />
-        ))}
-        <TagInput
-          org={org}
-          taken={tags.map((t) => t.slug)}
-          onAdd={(name) => saveTags([...tags.map((t) => t.name), name])}
-        />
-      </div>
-      {categories.length > 0 && (
+        </div>
+      )}
+      {parts.includes('categories') && categories.length > 0 && (
         <div className="chips" aria-label="Categories">
           {categories.map((category) => (
             <CategoryPicker
@@ -161,12 +155,14 @@ function CategoryPicker({
 }) {
   const { value } = category
   const label = value ? (
-    <span className={`tag value ${value.color}`}>
-      <span className={styles.categoryName}>{category.name}:</span> {value.name}
+    <span className={`category-value ${value.color}`}>
+      <span className="category-name">{category.name}</span>
+      <span>{value.name}</span>
     </span>
   ) : category.required ? (
-    <span className="tag value missing" title="Required before publishing">
-      {category.name}: choose
+    <span className="category-value missing" title="Required before publishing">
+      <span className="category-name">{category.name}</span>
+      <span>Choose</span>
     </span>
   ) : (
     <span className={styles.optional}>+ {category.name}</span>
@@ -195,7 +191,7 @@ function CategoryPicker({
                 if (option.id !== value?.id) onPick(option.id)
               }}
             >
-              <span className={`tag value ${option.color}`}>{option.name}</span>
+              <span className={`category-value ${option.color}`}>{option.name}</span>
               {option.id === value?.id && <span className={styles.tick}>✓</span>}
             </button>
           ))}
@@ -305,19 +301,15 @@ function TagInput({
               onMouseEnter={() => setIndex(i)}
               onClick={() => void add(option.name)}
             >
-              {option.tag ? <span className={`tag ${option.tag.color}`}>{option.label}</span> : option.label}
+              {option.tag ? (
+                <span className={`tag ${option.tag.color}`}>{option.label}</span>
+              ) : (
+                option.label
+              )}
             </button>
           ))}
         </div>
       )}
     </div>
-  )
-}
-
-function FolderIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
-    </svg>
   )
 }

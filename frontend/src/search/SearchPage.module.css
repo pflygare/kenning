@@ -27,23 +27,6 @@
   margin-bottom: 0.75rem;
 }
 
-.topic {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.05rem 0.55rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  color: var(--text);
-  font-size: 0.78rem;
-  font-weight: 550;
-  line-height: 1.5;
-}
-
-.topic:hover {
-  background: var(--surface-muted);
-  text-decoration: none;
-}
-
 .scope {
   margin-bottom: 0.5rem;
 }

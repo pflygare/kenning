@@ -287,7 +287,7 @@ function CategoryCard({
                 onCancel={() => setRenaming(null)}
               />
             ) : (
-              <Link to={valueListPath(org, value)} className={`tag value ${value.color}`}>
+              <Link to={valueListPath(org, value)} className={`category-value ${value.color}`}>
                 {value.name}
               </Link>
             )}

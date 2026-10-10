@@ -56,3 +56,7 @@
 .body :global(.tiptap) {
   min-height: 50vh;
 }
+
+.tags {
+  margin: 0 0 0.5rem;
+}

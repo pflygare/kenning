@@ -63,7 +63,7 @@ function Pages({ tagSlug, valueId }: { tagSlug: string | null; valueId: string |
       {valueId && (
         <div className={styles.filter}>
           <span className="muted">{value?.category ?? 'Category'}</span>
-          <span className={`tag value ${value?.color ?? ''}`}>
+          <span className={`category-value ${value?.color ?? ''}`}>
             {value?.name ?? '…'}
             <Link to={`/${org.slug}`} aria-label="Show all pages" className={styles.clear}>
               ×

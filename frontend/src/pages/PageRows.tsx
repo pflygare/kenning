@@ -1,14 +1,18 @@
 import { Link } from 'react-router'
 import type { PageSummary } from '../api/types/PageSummary'
+import ChipColumn from '../components/ChipColumn'
 import { valueListPath } from '../categories/paths'
 import TagChip from '../tags/TagChip'
 import { pagePath, timeAgo } from './format'
 import styles from './PageList.module.css'
 
-/** Pages as rows: title, status, category values, tags, and who changed it last. */
+/**
+ * Pages as rows, in columns: title and status, category values, tags, and who
+ * changed it last. Chips that don't fit their column collapse into "+N".
+ */
 export default function PageRows({ org, pages }: { org: string; pages: PageSummary[] }) {
   return (
-    <ul className={`card ${styles.list}`}>
+    <ul className={`card ${styles.list} ${styles.columns}`}>
       {pages.map((page) => (
         <li key={page.short_id} className={styles.row}>
           <Link to={pagePath(org, page)} className={styles.item}>
@@ -18,29 +22,48 @@ export default function PageRows({ org, pages }: { org: string; pages: PageSumma
             ) : (
               page.has_draft && <span className="badge draft">Unpublished changes</span>
             )}
-            {page.missing_required && (
-              <span className="badge draft" title="A required category has no value, so it can't be published">
-                Needs a category
-              </span>
-            )}
           </Link>
-          {(page.values.length > 0 || page.tags.length > 0) && (
-            <span className={`chips ${styles.tags}`}>
-              {page.values.map((value) => (
-                <Link
-                  key={value.id}
-                  to={valueListPath(org, value)}
-                  className={`tag value ${value.color}`}
-                  title={`${value.category}: ${value.name}`}
-                >
-                  {value.name}
-                </Link>
-              ))}
-              {page.tags.map((tag) => (
-                <TagChip key={tag.id} org={org} tag={tag} />
-              ))}
-            </span>
-          )}
+          <ChipColumn
+            className={styles.values}
+            label="categories"
+            chips={[
+              ...page.values.map((value) => ({
+                key: value.id,
+                node: (
+                  <Link
+                    to={valueListPath(org, value)}
+                    className={`category-value ${value.color}`}
+                    title={`${value.category}: ${value.name}`}
+                  >
+                    {value.name}
+                  </Link>
+                ),
+              })),
+              ...(page.missing_required
+                ? [
+                    {
+                      key: 'missing',
+                      node: (
+                        <span
+                          className="category-value missing"
+                          title="A required category has no value, so it can't be published"
+                        >
+                          Missing
+                        </span>
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+          <ChipColumn
+            className={styles.tags}
+            label="tags"
+            chips={page.tags.map((tag) => ({
+              key: tag.id,
+              node: <TagChip org={org} tag={tag} />,
+            }))}
+          />
           <span className={`muted ${styles.meta}`}>
             {page.updated_by_name} · {timeAgo(page.updated_at)}
           </span>

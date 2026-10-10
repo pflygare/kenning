@@ -5,28 +5,6 @@
   margin: 0.75rem 0 1.5rem;
 }
 
-.topic {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.05rem 0.55rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  color: var(--text);
-  font-size: 0.8rem;
-  font-weight: 550;
-  line-height: 1.5;
-}
-
-.topic:hover {
-  background: var(--surface-muted);
-  text-decoration: none;
-}
-
-.topic svg {
-  color: var(--text-muted);
-}
-
 .add {
   height: 1.6rem;
   padding: 0 0.5rem;
@@ -34,24 +12,7 @@
   font-weight: 500;
 }
 
-.check {
-  gap: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-}
 
-.check input {
-  width: 1rem;
-  height: 1rem;
-  margin: 0;
-  accent-color: var(--brand);
-}
-
-.empty {
-  margin: 0.5rem 0.625rem;
-  font-size: 0.85rem;
-  white-space: normal;
-}
 
 .tagInput {
   position: relative;
@@ -80,7 +41,7 @@
   background: var(--surface-muted);
 }
 
-.categoryTrigger {
+button.categoryTrigger {
   height: auto;
   padding: 0;
   border: none;
@@ -88,13 +49,8 @@
   box-shadow: none;
 }
 
-.categoryTrigger:hover {
+button.categoryTrigger:hover {
   background: none;
-}
-
-.categoryName {
-  font-weight: 450;
-  opacity: 0.8;
 }
 
 .optional {
