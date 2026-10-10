@@ -87,7 +87,11 @@ function Search() {
         <div>
           <h1>Search</h1>
           <p>
-            Results update as you type; every word matches the start of a word in a title, body or tag.
+            Results update as you type; every word matches the start of a word in a title, body or
+            tag. Start with a topic's name to search inside it, as in{' '}
+            <code>Engineering: roll back</code>, or narrow with <code>topic:</code>, <code>tag:</code>{' '}
+            or a category, as in <code>tag:how-to</code> or <code>class:internal</code>. Quote names with
+            spaces: <code>topic:"Backend services"</code>.
           </p>
         </div>
       </div>
@@ -167,7 +171,23 @@ function Search() {
           ))}
         </div>
       )}
-      {shown && (
+      {shown && shown.unmatched.length > 0 && (
+        <p className="alert error">
+          Nothing is called {shown.unmatched.map((f) => `“${f}”`).join(' or ')}. Check the topic, tag or
+          category name.
+        </p>
+      )}
+      {shown && shown.scope.length > 0 && (
+        <div className={`chips ${styles.scope}`} aria-label="Searching only in">
+          <span className="muted">Only</span>
+          {shown.scope.map((label) => (
+            <span key={label} className="badge">
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
+      {shown && shown.unmatched.length === 0 && (
         <p className={`muted ${styles.count}`} aria-live="polite">
           {shown.pages.length === 0
             ? `No pages match “${q}”${filtered ? ' with these filters' : ''}.`

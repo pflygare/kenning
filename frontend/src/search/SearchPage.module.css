@@ -44,6 +44,10 @@
   text-decoration: none;
 }
 
+.scope {
+  margin-bottom: 0.5rem;
+}
+
 .count {
   margin: 0 0 0.5rem;
 }

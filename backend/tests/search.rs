@@ -272,3 +272,110 @@ async fn search_stays_inside_the_organization(pool: PgPool) {
     let (status, _) = eve.get("/api/orgs/acme/search?q=secret").await;
     assert_eq!(status, StatusCode::NOT_FOUND);
 }
+
+#[sqlx::test(migrator = "MIGRATOR")]
+async fn queries_can_name_a_topic_tag_or_category_value(pool: PgPool) {
+    let mut ada = owner(&pool, "Ada", "ada@example.com", "acme").await;
+    let (_, eng) = ada
+        .post("/api/orgs/acme/topics", json!({"name": "Engineering"}))
+        .await;
+    let (_, backend) = ada
+        .post(
+            "/api/orgs/acme/topics",
+            json!({"name": "Backend services", "parent_id": eng["topic"]["id"]}),
+        )
+        .await;
+    let api = published(&mut ada, "API guide", "How to roll back a deploy").await;
+    let people = published(&mut ada, "People guide", "How to roll out a policy").await;
+    ada.put(
+        &format!("{api}/topics"),
+        json!({"topic_ids": [backend["topic"]["id"]]}),
+    )
+    .await;
+    ada.put(&format!("{people}/tags"), json!({"names": ["How-to"]}))
+        .await;
+    let (_, categories) = ada
+        .post(
+            "/api/orgs/acme/categories",
+            json!({"name": "Information class", "values": ["Open", "Internal"]}),
+        )
+        .await;
+    ada.put(
+        &format!("{api}/categories"),
+        json!({"category_id": categories[0]["id"], "value_id": categories[0]["values"][1]["id"]}),
+    )
+    .await;
+
+    let q = |query: &str| format!("q={}", urlencode(query));
+    assert_eq!(titles(&search(&mut ada, &q("roll")).await).len(), 2);
+
+    // A topic covers its sub-topics; names match whole, by slug, or by their start.
+    for query in [
+        "topic:Engineering roll",
+        "TOPIC:engin roll",
+        "topic:\"Backend services\" roll",
+        "roll topic:backend-services",
+    ] {
+        let results = search(&mut ada, &q(query)).await;
+        assert_eq!(titles(&results), ["API guide"], "{query}");
+    }
+    let results = search(&mut ada, &q("topic:engineering roll")).await;
+    assert_eq!(results["scope"], json!(["Topic: Engineering"]));
+    assert_eq!(results["topics"], json!([]));
+
+    assert_eq!(
+        titles(&search(&mut ada, &q("tag:how-to roll")).await),
+        ["People guide"]
+    );
+    assert_eq!(
+        titles(&search(&mut ada, &q("information-class:internal roll")).await),
+        ["API guide"]
+    );
+    assert_eq!(
+        titles(&search(&mut ada, &q("\"Information class\":int")).await),
+        ["API guide"],
+        "a filter alone lists everything it covers"
+    );
+
+    // Starting with a topic's name, then a colon, searches inside it.
+    for query in [
+        "Engineering: roll",
+        "backend services:roll",
+        "Eng:roll",
+        "Backend services:",
+    ] {
+        let results = search(&mut ada, &q(query)).await;
+        assert_eq!(titles(&results), ["API guide"], "{query}");
+    }
+    let results = search(&mut ada, &q("Backend services: roll")).await;
+    assert_eq!(results["scope"], json!(["Topic: Backend services"]));
+    // Text before a colon that names no topic is searched as words.
+    assert_eq!(titles(&search(&mut ada, &q("roll:")).await).len(), 2);
+
+    // A filter naming nothing says so instead of ignoring it.
+    let results = search(&mut ada, &q("topic:nowhere roll")).await;
+    assert_eq!(results["pages"], json!([]));
+    assert_eq!(results["unmatched"], json!(["topic:nowhere"]));
+
+    // Words with colons that aren't filters stay text.
+    let results = search(&mut ada, &q("roll back:")).await;
+    assert_eq!(titles(&results), ["API guide"]);
+
+    // The title lookup leaves filtered queries to full search.
+    let (_, quick) = ada
+        .get(&format!(
+            "/api/orgs/acme/search/quick?{}",
+            q("topic:eng api")
+        ))
+        .await;
+    assert_eq!(quick["pages"], json!([]));
+}
+
+fn urlencode(text: &str) -> String {
+    text.bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect()
+}

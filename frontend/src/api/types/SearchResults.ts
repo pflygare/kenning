@@ -6,4 +6,12 @@ export type SearchResults = {
 /**
  * Topics whose names match.
  */
-topics: Array<TopicRef>, pages: Array<SearchHit>, };
+topics: Array<TopicRef>, pages: Array<SearchHit>, 
+/**
+ * What the query's filters were understood as, such as "Topic: Engineering".
+ */
+scope: Array<string>, 
+/**
+ * Filters in the query that matched nothing, such as `topic:nope`.
+ */
+unmatched: Array<string>, };

@@ -3,6 +3,12 @@
 //! A page is searched as readers see it: its published revision, or its draft
 //! if it was never published. Every word typed matches as a prefix, so results
 //! appear while someone is still typing; titles also match with typos.
+//!
+//! A query can start with a topic's name to search inside it, as in
+//! `Engineering: roll back`. It can also narrow the search with
+//! `topic:Engineering`, `tag:how-to`, or
+//! a category and value such as `class:internal`. Quote names with spaces:
+//! `topic:"Backend services"`, `"information class":open`.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -59,6 +65,82 @@ pub struct SearchResults {
     /// Topics whose names match.
     pub topics: Vec<TopicRef>,
     pub pages: Vec<SearchHit>,
+    /// What the query's filters were understood as, such as "Topic: Engineering".
+    pub scope: Vec<String>,
+    /// Filters in the query that matched nothing, such as `topic:nope`.
+    pub unmatched: Vec<String>,
+}
+
+/// One `key:value` filter written in a query.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Filter {
+    pub key: String,
+    pub value: String,
+    /// As written, for messages.
+    pub text: String,
+}
+
+/// Split a query into its `key:value` filters and the words left over.
+/// Keys and values may be quoted to hold spaces. Whether a key means anything
+/// is decided later; `keep` says which keys to take out of the text.
+pub fn parse(q: &str, keep: impl Fn(&str) -> bool) -> (Vec<Filter>, String) {
+    let mut filters = vec![];
+    let mut rest = String::new();
+    let chars: Vec<char> = q.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i].is_whitespace() {
+            rest.push(' ');
+            i += 1;
+            continue;
+        }
+        let start = i;
+        let (key, after_key) = read_part(&chars, i, true);
+        if after_key < chars.len() && chars[after_key] == ':' && !key.is_empty() && keep(&key) {
+            let (value, end) = read_part(&chars, after_key + 1, false);
+            if !value.trim().is_empty() {
+                filters.push(Filter {
+                    key: key.to_lowercase(),
+                    value: value.trim().to_string(),
+                    text: chars[start..end].iter().collect(),
+                });
+                i = end;
+                continue;
+            }
+        }
+        // Not a filter: keep this word as text.
+        while i < chars.len() && !chars[i].is_whitespace() {
+            rest.push(chars[i]);
+            i += 1;
+        }
+    }
+    (
+        filters,
+        rest.split_whitespace().collect::<Vec<_>>().join(" "),
+    )
+}
+
+/// A quoted string, or a run of characters up to whitespace (or `:` for a key).
+fn read_part(chars: &[char], start: usize, is_key: bool) -> (String, usize) {
+    if chars.get(start) == Some(&'"')
+        && let Some(len) = chars[start + 1..].iter().position(|&c| c == '"')
+    {
+        let end = start + 1 + len;
+        return (chars[start + 1..end].iter().collect(), end + 1);
+    }
+    let mut end = start;
+    while end < chars.len() && !chars[end].is_whitespace() && !(is_key && chars[end] == ':') {
+        end += 1;
+    }
+    (chars[start..end].iter().collect(), end)
+}
+
+/// A category name as typed in a filter key: case, spaces and punctuation don't matter.
+fn key_form(name: &str) -> String {
+    name.chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(char::to_lowercase)
+        .collect()
 }
 
 /// A page title for the quick-open box.
@@ -96,65 +178,229 @@ fn trimmed(q: &str) -> String {
 
 const HIGHLIGHT: &str = "'StartSel=' || chr(2) || ', StopSel=' || chr(3)";
 
-pub async fn search(conn: &mut PgConnection, query: &SearchQuery) -> sqlx::Result<SearchResults> {
-    let raw = trimmed(&query.q);
-    let Some(tsquery) = prefix_query(&raw) else {
-        return Ok(SearchResults {
-            topics: vec![],
-            pages: vec![],
-        });
+/// Filters resolved to what they name.
+#[derive(Default)]
+struct Scope {
+    topics: Vec<Uuid>,
+    tags: Vec<String>,
+    values: Vec<Uuid>,
+    labels: Vec<String>,
+    unmatched: Vec<String>,
+}
+
+/// The topic a name refers to: an exact name or slug first, else the shortest
+/// name starting with it.
+async fn find_topic(conn: &mut PgConnection, name: &str) -> sqlx::Result<Option<(Uuid, String)>> {
+    sqlx::query_as(
+        "SELECT id, name FROM topics
+         WHERE archived_at IS NULL
+           AND (lower(name) = lower($1) OR slug = $2 OR lower(name) LIKE lower($1) || '%')
+         ORDER BY lower(name) = lower($1) OR slug = $2 DESC, length(name), lower(name)
+         LIMIT 1",
+    )
+    .bind(name)
+    .bind(crate::orgs::slugify(name))
+    .fetch_optional(conn)
+    .await
+}
+
+/// A query written as `Topic name: words` searches inside that topic. Returns
+/// the topic and the rest of the query when the text before the first colon
+/// names one.
+async fn topic_first(
+    conn: &mut PgConnection,
+    q: &str,
+) -> sqlx::Result<Option<((Uuid, String), String)>> {
+    let Some((head, tail)) = q.split_once(':') else {
+        return Ok(None);
     };
-    let filtered = query.topic.is_some() || query.tag.is_some() || query.value.is_some();
-    let topics = if filtered {
-        vec![]
-    } else {
-        sqlx::query_as(
-            "SELECT id, short_id, slug, name FROM topics
-             WHERE archived_at IS NULL
-               AND (to_tsvector('simple', name) @@ to_tsquery('simple', $1) OR name % $2)
-             ORDER BY similarity(name, $2) DESC, lower(name)
-             LIMIT 5",
-        )
-        .bind(&tsquery)
-        .bind(&raw)
-        .fetch_all(&mut *conn)
+    let head = head.trim();
+    let key = head.to_lowercase();
+    if head.is_empty()
+        || head.contains('"')
+        || key == "topic"
+        || key == "tag"
+        || tail.starts_with("//")
+    {
+        return Ok(None);
+    }
+    Ok(find_topic(conn, head)
         .await?
+        .map(|topic| (topic, tail.trim().to_string())))
+}
+
+/// Category names in their filter-key form, so `class:` or `information-class:` can name one.
+async fn category_keys(conn: &mut PgConnection) -> sqlx::Result<Vec<(Uuid, String, String)>> {
+    let rows: Vec<(Uuid, String)> = sqlx::query_as("SELECT id, name FROM categories")
+        .fetch_all(conn)
+        .await?;
+    Ok(rows
+        .into_iter()
+        .map(|(id, name)| (id, key_form(&name), name))
+        .collect())
+}
+
+async fn resolve(
+    conn: &mut PgConnection,
+    filters: &[Filter],
+    categories: &[(Uuid, String, String)],
+) -> sqlx::Result<Scope> {
+    let mut scope = Scope::default();
+    for filter in filters {
+        let slug = crate::orgs::slugify(&filter.value);
+        let found: Option<(Uuid, String)> = match filter.key.as_str() {
+            "topic" => find_topic(&mut *conn, &filter.value).await?,
+            "tag" => {
+                sqlx::query_as("SELECT id, name FROM tags WHERE slug = $1")
+                    .bind(&slug)
+                    .fetch_optional(&mut *conn)
+                    .await?
+            }
+            key => {
+                let category = categories
+                    .iter()
+                    .find(|(_, form, _)| form == &key_form(key));
+                match category {
+                    Some((category_id, _, _)) => {
+                        sqlx::query_as(
+                            "SELECT id, name FROM category_values
+                         WHERE category_id = $1
+                           AND (lower(name) = lower($2) OR lower(name) LIKE lower($2) || '%')
+                         ORDER BY lower(name) = lower($2) DESC, position
+                         LIMIT 1",
+                        )
+                        .bind(category_id)
+                        .bind(&filter.value)
+                        .fetch_optional(&mut *conn)
+                        .await?
+                    }
+                    None => None,
+                }
+            }
+        };
+        let Some((id, name)) = found else {
+            scope.unmatched.push(filter.text.clone());
+            continue;
+        };
+        match filter.key.as_str() {
+            "topic" => {
+                scope.topics.push(id);
+                scope.labels.push(format!("Topic: {name}"));
+            }
+            "tag" => {
+                scope.tags.push(slug);
+                scope.labels.push(format!("Tag: {name}"));
+            }
+            key => {
+                let category = categories
+                    .iter()
+                    .find(|(_, form, _)| form == &key_form(key))
+                    .map(|(_, _, name)| name.as_str())
+                    .unwrap_or(key);
+                scope.values.push(id);
+                scope.labels.push(format!("{category}: {name}"));
+            }
+        }
+    }
+    Ok(scope)
+}
+
+pub async fn search(conn: &mut PgConnection, query: &SearchQuery) -> sqlx::Result<SearchResults> {
+    let categories = category_keys(&mut *conn).await?;
+    let mut raw = trimmed(&query.q);
+    let first = topic_first(&mut *conn, &raw).await?;
+    if let Some((_, rest)) = &first {
+        raw = rest.clone();
+    }
+    let (filters, text) = parse(&raw, |key| {
+        let key = key.to_lowercase();
+        key == "topic"
+            || key == "tag"
+            || categories
+                .iter()
+                .any(|(_, form, _)| *form == key_form(&key))
+    });
+    let mut scope = resolve(&mut *conn, &filters, &categories).await?;
+    if let Some(((id, name), _)) = first {
+        scope.topics.insert(0, id);
+        scope.labels.insert(0, format!("Topic: {name}"));
+    }
+    scope.topics.extend(query.topic);
+    scope.tags.extend(query.tag.clone());
+    scope.values.extend(query.value);
+    let tsquery = prefix_query(&text);
+    let empty = SearchResults {
+        topics: vec![],
+        pages: vec![],
+        scope: scope.labels.clone(),
+        unmatched: scope.unmatched.clone(),
+    };
+    // Nothing to look for, or a filter that names nothing: no pages, not all of them.
+    if (tsquery.is_none() && scope.labels.is_empty()) || !scope.unmatched.is_empty() {
+        return Ok(empty);
+    }
+    let filtered = !scope.topics.is_empty() || !scope.tags.is_empty() || !scope.values.is_empty();
+    let topics = match (&tsquery, filtered) {
+        (Some(tsquery), false) => {
+            sqlx::query_as(
+                "SELECT id, short_id, slug, name FROM topics
+                 WHERE archived_at IS NULL
+                   AND (to_tsvector('simple', name) @@ to_tsquery('simple', $1) OR name % $2)
+                 ORDER BY similarity(name, $2) DESC, lower(name)
+                 LIMIT 5",
+            )
+            .bind(tsquery)
+            .bind(&text)
+            .fetch_all(&mut *conn)
+            .await?
+        }
+        _ => vec![],
     };
     let pages = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "WITH q AS (SELECT to_tsquery('simple', $1) AS q),
          hits AS (
              SELECT p.id, p.short_id, p.slug, p.published_revision_id, p.updated_at,
                     r.title, r.body_md, r.author_id,
-                    ts_rank_cd(r.search, q.q) + similarity(r.title, $2) AS rank
+                    coalesce(ts_rank_cd(r.search, q.q), 0) + similarity(r.title, $2) AS rank
              FROM pages p
              JOIN page_revisions r ON r.id = coalesce(p.published_revision_id, p.current_revision_id)
              CROSS JOIN q
              WHERE p.archived_at IS NULL
-               AND (r.search @@ q.q
+               AND ($1::text IS NULL
+                    OR r.search @@ q.q
                     OR r.title % $2
                     OR EXISTS (SELECT 1 FROM page_tags pt JOIN tags t ON t.id = pt.tag_id
                                WHERE pt.page_id = p.id AND to_tsvector('simple', t.name) @@ q.q))
-               AND ($3::uuid IS NULL OR EXISTS (
-                     WITH RECURSIVE under AS (
-                         SELECT id FROM topics WHERE id = $3
-                         UNION
-                         SELECT t.id FROM topics t JOIN under ON t.parent_id = under.id
-                     )
-                     SELECT 1 FROM page_topics pt JOIN under ON under.id = pt.topic_id
-                     WHERE pt.page_id = p.id))
-               AND ($4::text IS NULL OR EXISTS (
-                     SELECT 1 FROM page_tags pt JOIN tags t ON t.id = pt.tag_id
-                     WHERE pt.page_id = p.id AND t.slug = $4))
-               AND ($5::uuid IS NULL OR EXISTS (
-                     SELECT 1 FROM page_categories pc WHERE pc.page_id = p.id AND pc.value_id = $5))
+               -- Every topic named: the page is in it or one of its sub-topics.
+               AND NOT EXISTS (
+                     SELECT 1 FROM unnest($3::uuid[]) AS wanted(id)
+                     WHERE NOT EXISTS (
+                         WITH RECURSIVE under AS (
+                             SELECT wanted.id AS id
+                             UNION
+                             SELECT t.id FROM topics t JOIN under ON t.parent_id = under.id
+                         )
+                         SELECT 1 FROM page_topics pt JOIN under ON under.id = pt.topic_id
+                         WHERE pt.page_id = p.id))
+               AND NOT EXISTS (
+                     SELECT 1 FROM unnest($4::text[]) AS wanted(slug)
+                     WHERE NOT EXISTS (
+                         SELECT 1 FROM page_tags pt JOIN tags t ON t.id = pt.tag_id
+                         WHERE pt.page_id = p.id AND t.slug = wanted.slug))
+               AND NOT EXISTS (
+                     SELECT 1 FROM unnest($5::uuid[]) AS wanted(id)
+                     WHERE NOT EXISTS (
+                         SELECT 1 FROM page_categories pc
+                         WHERE pc.page_id = p.id AND pc.value_id = wanted.id))
              ORDER BY rank DESC, p.updated_at DESC
              LIMIT 50
          )
          SELECT h.short_id, h.slug,
-                ts_headline('simple', h.title, q.q, {HIGHLIGHT} || ', HighlightAll=true') AS title,
-                ts_headline('simple', kenning_plain_text(h.body_md), q.q,
-                            {HIGHLIGHT} || ', MaxWords=30, MinWords=15, MaxFragments=2, FragmentDelimiter=\" … \"')
-                    AS snippet,
+                coalesce(ts_headline('simple', h.title, q.q, {HIGHLIGHT} || ', HighlightAll=true'),
+                         h.title) AS title,
+                coalesce(ts_headline('simple', kenning_plain_text(h.body_md), q.q,
+                                     {HIGHLIGHT} || ', MaxWords=30, MinWords=15, MaxFragments=2, FragmentDelimiter=\" … \"'),
+                         left(kenning_plain_text(h.body_md), 200)) AS snippet,
                 h.published_revision_id IS NOT NULL AS published,
                 h.updated_at, u.name AS updated_by_name,
                 coalesce((SELECT json_agg(json_build_object('id', t.id, 'short_id', t.short_id,
@@ -178,19 +424,39 @@ pub async fn search(conn: &mut PgConnection, query: &SearchQuery) -> sqlx::Resul
          ORDER BY h.rank DESC, h.updated_at DESC"
     )))
     .bind(&tsquery)
-    .bind(&raw)
-    .bind(query.topic)
-    .bind(&query.tag)
-    .bind(query.value)
+    .bind(&text)
+    .bind(&scope.topics)
+    .bind(&scope.tags)
+    .bind(&scope.values)
     .fetch_all(&mut *conn)
     .await?;
-    Ok(SearchResults { topics, pages })
+    Ok(SearchResults {
+        topics,
+        pages,
+        ..empty
+    })
 }
 
 /// Titles for the quick-open box: matching pages and topics, or the most
 /// recently changed pages when nothing is typed yet.
 pub async fn quick(conn: &mut PgConnection, q: &str) -> sqlx::Result<QuickResults> {
     let raw = trimmed(q);
+    // A query that narrows by topic, tag or category is for full search, not titles.
+    let categories = category_keys(&mut *conn).await?;
+    let (filters, _) = parse(&raw, |key| {
+        let key = key.to_lowercase();
+        key == "topic"
+            || key == "tag"
+            || categories
+                .iter()
+                .any(|(_, form, _)| *form == key_form(&key))
+    });
+    if !filters.is_empty() || topic_first(&mut *conn, &raw).await?.is_some() {
+        return Ok(QuickResults {
+            topics: vec![],
+            pages: vec![],
+        });
+    }
     let Some(tsquery) = prefix_query(&raw) else {
         let pages = sqlx::query_as(
             "SELECT p.short_id, p.slug, coalesce(pub.title, cur.title) AS title,
@@ -242,6 +508,31 @@ pub async fn quick(conn: &mut PgConnection, q: &str) -> sqlx::Result<QuickResult
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn filters_come_out_of_the_text() {
+        let known = |key: &str| ["topic", "tag", "class"].contains(&key.to_lowercase().as_str());
+        let (filters, text) = parse("Topic:Engineering deploy tag:how-to", known);
+        assert_eq!(text, "deploy");
+        assert_eq!(
+            filters
+                .iter()
+                .map(|f| (f.key.as_str(), f.value.as_str()))
+                .collect::<Vec<_>>(),
+            [("topic", "Engineering"), ("tag", "how-to")]
+        );
+        assert_eq!(filters[1].text, "tag:how-to");
+
+        let (filters, text) = parse("topic:\"Backend services\" roll back", known);
+        assert_eq!(filters[0].value, "Backend services");
+        assert_eq!(text, "roll back");
+
+        // Unknown keys, empty values and stray colons stay text.
+        let (filters, text) = parse("see https://x.io at 10:30 topic: class:open", known);
+        assert_eq!(text, "see https://x.io at 10:30 topic:");
+        assert_eq!(filters.len(), 1);
+        assert_eq!(key_form("Information class"), key_form("information-class"));
+    }
 
     #[test]
     fn queries_become_prefix_matches() {
