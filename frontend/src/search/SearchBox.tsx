@@ -33,7 +33,8 @@ export default function SearchBox({ org }: { org: string }) {
   const [q, setQ] = useState('')
   const [results, setResults] = useState<QuickResults | null>(null)
   const [text, setText] = useState<{ q: string; hits: SearchHit[] }>({ q: '', hits: [] })
-  const [index, setIndex] = useState(0)
+  // -1 while nothing is picked: Enter then searches all pages.
+  const [index, setIndex] = useState(-1)
   const [open, setOpen] = useState(false)
   const latest = useRef('')
   const input = useRef<HTMLInputElement>(null)
@@ -64,7 +65,7 @@ export default function SearchBox({ org }: { org: string }) {
           // Answers can arrive out of order; keep only the one for what is typed now.
           if (latest.current === q) {
             setResults(r)
-            setIndex(0)
+            setIndex(-1)
           }
         })
         .catch(() => setResults({ pages: [], topics: [] }))
@@ -139,8 +140,8 @@ export default function SearchBox({ org }: { org: string }) {
         }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') setIndex((i) => Math.min(i + 1, options.length - 1))
-          else if (e.key === 'ArrowUp') setIndex((i) => Math.max(i - 1, 0))
-          else if (e.key === 'Enter') go(options[index])
+          else if (e.key === 'ArrowUp') setIndex((i) => Math.max(i - 1, -1))
+          else if (e.key === 'Enter') go(options[index] ?? options.find((o) => o.kind === 'search'))
           else if (e.key === 'Escape') close()
           else return
           e.preventDefault()
@@ -192,10 +193,10 @@ export default function SearchBox({ org }: { org: string }) {
           </ul>
           <div className={styles.footer}>
             <span>
-              <kbd>↑</kbd> <kbd>↓</kbd> to move
+              <kbd>↑</kbd> <kbd>↓</kbd> to pick
             </span>
             <span>
-              <kbd>Enter</kbd> to open
+              <kbd>Enter</kbd> to search, or open what you picked
             </span>
             <span>
               <kbd>Esc</kbd> to close
