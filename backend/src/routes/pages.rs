@@ -38,7 +38,7 @@ async fn list(
     Query(filter): Query<ListFilter>,
 ) -> AppResult<Json<Vec<PageSummary>>> {
     let mut tx = db::begin_org(&state.pool, ctx.org.id).await?;
-    let pages = pages::list(&mut tx, &filter).await?;
+    let pages = pages::list(&mut tx, &filter, ctx.user.id).await?;
     tx.commit().await?;
     Ok(Json(pages))
 }

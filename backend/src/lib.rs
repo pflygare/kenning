@@ -14,6 +14,7 @@ pub mod mail;
 pub mod orgs;
 pub mod pages;
 pub mod routes;
+pub mod search;
 pub mod tags;
 pub mod tokens;
 pub mod topics;

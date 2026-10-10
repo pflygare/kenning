@@ -191,6 +191,8 @@ pub async fn detail(conn: &mut PgConnection, short_id: &str) -> AppResult<TopicD
             topic_id: Some(topic.id),
             ..ListFilter::default()
         },
+        // Only `my_drafts` reads who is asking.
+        Uuid::nil(),
     )
     .await?;
     Ok(TopicDetail {

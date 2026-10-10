@@ -10,6 +10,7 @@ mod dev;
 mod invites;
 mod orgs;
 mod pages;
+mod search;
 mod tags;
 mod topics;
 
@@ -25,6 +26,7 @@ pub fn api() -> Router<AppState> {
         .merge(topics::routes())
         .merge(tags::routes())
         .merge(categories::routes())
+        .merge(search::routes())
         .fallback(|| async { AppError::NotFound })
 }
 
