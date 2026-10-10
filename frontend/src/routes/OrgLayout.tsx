@@ -38,6 +38,10 @@ export default function OrgLayout() {
             <HomeIcon />
             Pages
           </NavLink>
+          <NavLink to={`${home}/drafts`} className={link}>
+            <DraftIcon />
+            My drafts
+          </NavLink>
           <NavLink to={`${home}/tags`} className={link}>
             <TagIcon />
             Tags
@@ -80,6 +84,15 @@ export default function OrgLayout() {
         </main>
       </div>
     </TopicsContext.Provider>
+  )
+}
+
+function DraftIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20h4L19 9l-4-4L4 16z" />
+      <path d="m13.5 6.5 4 4" />
+    </svg>
   )
 }
 

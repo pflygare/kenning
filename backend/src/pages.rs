@@ -60,6 +60,9 @@ pub struct ListFilter {
     pub topic_id: Option<Uuid>,
     /// A category value's id.
     pub value: Option<Uuid>,
+    /// Only pages with unpublished changes last saved by the person asking.
+    #[serde(default)]
+    pub my_drafts: bool,
 }
 
 /// One version of a page's content.
@@ -175,7 +178,12 @@ fn stale() -> AppError {
 }
 
 /// Pages in the organization: in a topic by title, otherwise most recently changed first.
-pub async fn list(conn: &mut PgConnection, filter: &ListFilter) -> sqlx::Result<Vec<PageSummary>> {
+/// `user_id` is the person asking, for `my_drafts`.
+pub async fn list(
+    conn: &mut PgConnection,
+    filter: &ListFilter,
+    user_id: Uuid,
+) -> sqlx::Result<Vec<PageSummary>> {
     sqlx::query_as(
         "SELECT p.short_id, p.slug,
                 coalesce(pub.title, cur.title) AS title,
@@ -209,6 +217,8 @@ pub async fn list(conn: &mut PgConnection, filter: &ListFilter) -> sqlx::Result<
                  SELECT 1 FROM page_topics pt WHERE pt.page_id = p.id AND pt.topic_id = $2))
            AND ($3::uuid IS NULL OR EXISTS (
                  SELECT 1 FROM page_categories pc WHERE pc.page_id = p.id AND pc.value_id = $3))
+           AND (NOT $4 OR (p.published_revision_id IS DISTINCT FROM p.current_revision_id
+                           AND cur.author_id = $5))
          ORDER BY CASE WHEN $2::uuid IS NOT NULL THEN lower(coalesce(pub.title, cur.title)) END,
                   p.updated_at DESC
          LIMIT 200",
@@ -216,6 +226,8 @@ pub async fn list(conn: &mut PgConnection, filter: &ListFilter) -> sqlx::Result<
     .bind(&filter.tag)
     .bind(filter.topic_id)
     .bind(filter.value)
+    .bind(filter.my_drafts)
+    .bind(user_id)
     .fetch_all(conn)
     .await
 }
