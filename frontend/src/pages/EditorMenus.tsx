@@ -3,7 +3,14 @@ import { type KeyboardEvent, type MouseEvent, useEffect, useRef, useState } from
 import { editImageText, imageSelected } from './captionedImage'
 import { copyLink } from './format'
 import { readHeadings } from './headings'
-import { blockFormats, type Format, insertFormats, matchFormats, textFormats } from './formats'
+import {
+  blockFormats,
+  type Format,
+  insertFormats,
+  matchFormats,
+  tableActions,
+  textFormats,
+} from './formats'
 import styles from './EditorMenus.module.css'
 
 type Point = { x: number; y: number }
@@ -292,6 +299,24 @@ export function useContextMenu(editor: Editor | null, linkBase?: string) {
           ))}
         </div>
         <div className={styles.separator} />
+        {editor.isActive('table') && (
+          <>
+            <div className={styles.columns} role="group" aria-label="Table">
+              {tableActions.map((action) => (
+                <button
+                  key={action.label}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => run(() => action.run(editor))}
+                >
+                  <span className={styles.icon}>{action.icon}</span>
+                  {action.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.separator} />
+          </>
+        )}
         {blockFormats.map((format) => (
           <button
             key={format.id}

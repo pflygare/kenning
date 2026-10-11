@@ -91,3 +91,13 @@
   color: var(--text-muted);
   font-size: 0.72rem;
 }
+
+/* Table actions sit in two columns: above/below and left/right side by side. */
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.columns button:last-child {
+  grid-column: 1 / -1;
+}

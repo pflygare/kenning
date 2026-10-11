@@ -42,7 +42,6 @@
     --bg: #0b1120;
     --surface: #111a2e;
     --surface-muted: #16213a;
-  --surface-raised: #1f2c4a;
     --surface-raised: #1f2c4a;
     --text: #e2e8f0;
     --text-muted: #94a3b8;
@@ -59,7 +58,6 @@
     --logo-light: #3b82f6;
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
     --shadow: 0 1px 3px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 25%);
-  --shadow-lg: 0 2px 6px rgb(0 0 0 / 40%), 0 16px 40px rgb(0 0 0 / 55%);
     --shadow-lg: 0 2px 6px rgb(0 0 0 / 40%), 0 16px 40px rgb(0 0 0 / 55%);
   }
 }
@@ -539,12 +537,111 @@ button.small {
 }
 
 .prose .tiptap :where(blockquote) {
-  margin-bottom: 0;
-  margin-left: 0;
-  margin-right: 0;
-  padding-left: 1rem;
-  border-left: 3px solid var(--brand);
+  position: relative;
+  margin: 0;
+  padding: 0.125rem 0 0.125rem 2.75rem;
+  color: var(--text);
+  font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  font-size: 1.08em;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* A large opening quotation mark sets a quote apart from notes, which are boxes. */
+.prose .tiptap :where(blockquote)::before {
+  content: '\201C';
+  position: absolute;
+  top: -0.2em;
+  left: 0.2rem;
+  color: color-mix(in srgb, var(--brand) 55%, transparent);
+  font-size: 3.4em;
+  font-style: normal;
+  line-height: 1;
+}
+
+.prose .tiptap :where(blockquote) > * + * {
+  margin-top: 0.6em;
+}
+
+.prose .tiptap :where(blockquote) :where(code, pre) {
+  font-style: normal;
+}
+
+.prose .tiptap mark {
+  padding: 0.05em 0.15em;
+  border-radius: 3px;
+  background: color-mix(in srgb, #facc15 45%, transparent);
+  color: inherit;
+}
+
+/* Tables scroll sideways on their own when they're wider than the page. */
+.prose .tiptap table {
+  display: block;
+  max-width: 100%;
+  width: max-content;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.925rem;
+  line-height: 1.5;
+}
+
+.prose .tiptap :where(th, td) {
+  position: relative;
+  min-width: 4rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border-strong);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose .tiptap th {
+  background: var(--surface-muted);
+  font-weight: 600;
+}
+
+.prose .tiptap :where(th, td) > p {
+  margin: 0;
+}
+
+.prose .tiptap .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  pointer-events: none;
+}
+
+.prose .tiptap ul[data-type='taskList'] {
+  padding-left: 0.2rem;
+  list-style: none;
+}
+
+.prose .tiptap ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.prose .tiptap ul[data-type='taskList'] li > label {
+  flex: none;
+  margin-top: 0.3em;
+}
+
+.prose .tiptap ul[data-type='taskList'] input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.prose .tiptap ul[data-type='taskList'] li > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.prose .tiptap ul[data-type='taskList'] li[data-checked='true'] > div {
   color: var(--text-muted);
+  text-decoration: line-through;
 }
 
 .prose .tiptap code {
@@ -565,6 +662,86 @@ button.small {
 .prose .tiptap pre code {
   padding: 0;
   background: none;
+}
+
+/* Code colors, after GitHub's. */
+.prose .tiptap pre {
+  --code-keyword: #cf222e;
+  --code-string: #0a3069;
+  --code-number: #0550ae;
+  --code-title: #8250df;
+  --code-type: #953800;
+  --code-comment: #6e7781;
+  --code-tag: #116329;
+}
+
+:root[data-theme='dark'] .prose .tiptap pre {
+  --code-keyword: #ff7b72;
+  --code-string: #a5d6ff;
+  --code-number: #79c0ff;
+  --code-title: #d2a8ff;
+  --code-type: #ffa657;
+  --code-comment: #8b949e;
+  --code-tag: #7ee787;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .prose .tiptap pre {
+    --code-keyword: #ff7b72;
+    --code-string: #a5d6ff;
+    --code-number: #79c0ff;
+    --code-title: #d2a8ff;
+    --code-type: #ffa657;
+    --code-comment: #8b949e;
+    --code-tag: #7ee787;
+  }
+}
+
+.prose .tiptap pre :is(.hljs-keyword, .hljs-doctag, .hljs-template-tag, .hljs-variable.language_) {
+  color: var(--code-keyword);
+}
+
+.prose .tiptap pre :is(.hljs-string, .hljs-regexp, .hljs-meta .hljs-string) {
+  color: var(--code-string);
+}
+
+.prose .tiptap pre :is(.hljs-number, .hljs-literal, .hljs-attr, .hljs-attribute, .hljs-built_in, .hljs-symbol, .hljs-selector-attr, .hljs-variable, .hljs-property) {
+  color: var(--code-number);
+}
+
+.prose .tiptap pre :is(.hljs-title, .hljs-title.function_, .hljs-section) {
+  color: var(--code-title);
+}
+
+.prose .tiptap pre :is(.hljs-type, .hljs-title.class_, .hljs-meta) {
+  color: var(--code-type);
+}
+
+.prose .tiptap pre :is(.hljs-comment, .hljs-quote) {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.prose .tiptap pre :is(.hljs-name, .hljs-tag, .hljs-selector-tag, .hljs-selector-class, .hljs-selector-id) {
+  color: var(--code-tag);
+}
+
+.prose .tiptap pre :is(.hljs-addition) {
+  color: var(--code-tag);
+  background: color-mix(in srgb, var(--code-tag) 12%, transparent);
+}
+
+.prose .tiptap pre :is(.hljs-deletion) {
+  color: var(--code-keyword);
+  background: color-mix(in srgb, var(--code-keyword) 12%, transparent);
+}
+
+.prose .tiptap pre .hljs-strong {
+  font-weight: 600;
+}
+
+.prose .tiptap pre .hljs-emphasis {
+  font-style: italic;
 }
 
 .prose .tiptap hr {
