@@ -92,8 +92,8 @@
   position: sticky;
   top: 5.75rem;
   align-self: start;
-  max-height: calc(100vh - 7.5rem);
-  overflow-y: auto;
+  /* Above the page, so the box's menus open over it rather than under it. */
+  z-index: 3;
 }
 
 /* The page's details: a box like the outline's. */
