@@ -10,19 +10,20 @@ const READING_LINE = 96
 export const DOCK_QUERY = '(min-width: 68.0625rem)'
 
 /**
- * The page's headings in a panel docked to the window's right edge, under the page's
- * `actions` if any. Follows along as you scroll and jumps on click; shows nothing when there
- * are neither headings nor actions.
+ * The page's headings in a panel docked to the window's right edge, under whatever comes
+ * `above` it. Follows along as you scroll and jumps on click; shows nothing when there
+ * is neither.
  */
 export default function Outline({
   headings,
   linkBase,
-  actions,
+  above,
 }: {
   headings: Heading[]
   /** The page's address; each heading then gets a button that copies a link to it. */
   linkBase?: string
-  actions?: ReactNode
+  /** What sits above the outline in the docked column, such as the page's buttons. */
+  above?: ReactNode
 }) {
   const [current, setCurrent] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -66,12 +67,12 @@ export default function Outline({
     return () => window.clearTimeout(timer)
   }, [copied])
 
-  if (!headings.length && !actions) return null
+  if (!headings.length && !above) return null
 
   const top = Math.min(...headings.map((h) => h.level))
   return (
     <aside className={`${styles.dock} outline-dock`}>
-      {actions && <div className={styles.actions}>{actions}</div>}
+      {above}
       {headings.length > 0 && (
         <nav className={styles.outline} aria-label="Outline">
           <p className={styles.title}>Outline</p>

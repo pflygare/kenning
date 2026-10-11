@@ -11,14 +11,6 @@
   padding: 2.25rem 1.5rem 1.5rem 0.5rem;
 }
 
-/* The page's own buttons, above the outline. */
-.actions {
-  display: flex;
-  flex: none;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
 /* Too narrow for both side panels: the page keeps the width and the outline steps aside. */
 @media (max-width: 68rem) {
   .dock {

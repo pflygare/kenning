@@ -25,8 +25,8 @@ export default function PageView() {
   const action = useAction()
   const [headings, setHeadings] = useState<Heading[]>([])
   const more = useRef<HTMLDetailsElement>(null)
-  // With room for the docked column, the page's buttons sit above the outline and categories
-  // take their place beside the title; otherwise both stay in the page.
+  // With room for the docked column, the page's buttons and details sit above the outline;
+  // otherwise they stay in the page, under the title.
   const docked = useMediaQuery(DOCK_QUERY)
 
   // The ⋯ menu closes on a click outside it and on Escape, like other menus.
@@ -136,6 +136,52 @@ export default function PageView() {
     </div>
   )
 
+  // Who published it, its topics, tags and categories: a box beside the page, like the outline.
+  const details = (
+    <section className={styles.details} aria-label="Page details">
+      <p className={styles.byline}>
+        {page.published
+          ? `Published by ${page.published_by_name} · ${timeAgo(page.published_at!)}`
+          : `Started by ${shown.author_name} · ${timeAgo(page.created_at)}`}
+        {' · '}
+        <Link className={styles.historyLink} to={`${here}/history`}>
+          History
+        </Link>
+      </p>
+      <h2 className={styles.label}>Tags</h2>
+      <PageMeta
+        org={org.slug}
+        api={api}
+        page={page}
+        onChange={setPage}
+        parts={['tags']}
+        className={styles.part}
+      />
+      <h2 className={styles.label}>Topics</h2>
+      <PageMeta
+        org={org.slug}
+        api={api}
+        page={page}
+        onChange={setPage}
+        parts={['topics']}
+        className={styles.part}
+      />
+      {(page.categories?.length ?? 0) > 0 && (
+        <>
+          <h2 className={styles.label}>Categories</h2>
+          <PageMeta
+            org={org.slug}
+            api={api}
+            page={page}
+            onChange={setPage}
+            parts={['categories']}
+            className={`${styles.part} ${styles.categoryList}`}
+          />
+        </>
+      )}
+    </section>
+  )
+
   return (
     <>
       <article className={styles.page}>
@@ -174,45 +220,11 @@ export default function PageView() {
         )}
         {action.error && <p className="alert error">{action.error}</p>}
 
-        <PageMeta
-          org={org.slug}
-          api={api}
-          page={page}
-          onChange={setPage}
-          parts={['tags']}
-          className={styles.tags}
-        />
         <header className={styles.header}>
           <h1>{shown.title}</h1>
-          {docked ? (
-            <PageMeta
-              org={org.slug}
-              api={api}
-              page={page}
-              onChange={setPage}
-              parts={['categories']}
-              className={styles.categories}
-            />
-          ) : (
-            actions
-          )}
+          {!docked && actions}
         </header>
-        <p className="muted">
-          {page.published
-            ? `Published by ${page.published_by_name} · ${timeAgo(page.published_at!)}`
-            : `Started by ${shown.author_name} · ${timeAgo(page.created_at)}`}
-          {' · '}
-          <Link className={styles.historyLink} to={`${here}/history`}>
-            History
-          </Link>
-        </p>
-        <PageMeta
-          org={org.slug}
-          api={api}
-          page={page}
-          onChange={setPage}
-          parts={docked ? ['topics'] : ['topics', 'categories']}
-        />
+        {!docked && details}
 
         {shown.body_md.trim() ? (
           <LinkPreviews
@@ -236,7 +248,14 @@ export default function PageView() {
         key={page.short_id}
         headings={shown.body_md.trim() ? headings : []}
         linkBase={here}
-        actions={docked ? actions : undefined}
+        above={
+          docked ? (
+            <>
+              <div className={styles.dockActions}>{actions}</div>
+              {details}
+            </>
+          ) : undefined
+        }
       />
     </>
   )
