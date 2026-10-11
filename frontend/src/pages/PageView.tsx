@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { apiDelete, apiPost } from '../api/client'
 import type { CreateTemplateRequest } from '../api/types/CreateTemplateRequest'
@@ -23,6 +23,27 @@ export default function PageView() {
   const location = useLocation()
   const action = useAction()
   const [headings, setHeadings] = useState<Heading[]>([])
+  const more = useRef<HTMLDetailsElement>(null)
+
+  // The ⋯ menu closes on a click outside it and on Escape, like other menus.
+  useEffect(() => {
+    const close = (event: MouseEvent | KeyboardEvent) => {
+      const menu = more.current
+      if (!menu?.open) return
+      if (
+        event instanceof KeyboardEvent
+          ? event.key === 'Escape'
+          : !menu.contains(event.target as Node)
+      )
+        menu.open = false
+    }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [])
 
   // Keep the address in step with the title (slugs change on publish).
   useEffect(() => {
@@ -127,11 +148,17 @@ export default function PageView() {
                 Edit
               </Link>
             )}
-            <details className={styles.more}>
+            <details ref={more} className={styles.more}>
               <summary className="button" aria-label="More actions">
                 ⋯
               </summary>
-              <div className={styles.menu}>
+              <div
+                className={styles.menu}
+                onClick={(e) => {
+                  // Choosing an item closes the menu.
+                  if ((e.target as Element).closest('a, button')) more.current!.open = false
+                }}
+              >
                 <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
                   Page history
                 </Link>
