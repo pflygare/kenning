@@ -549,25 +549,12 @@ button.small {
 .prose .tiptap :where(blockquote) {
   position: relative;
   margin: 0;
-  padding: 0.75rem 1.1rem 0.75rem 2.6rem;
+  padding: 0.75rem 1.1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-muted);
   color: color-mix(in srgb, var(--text) 72%, var(--brand));
   font-style: italic;
-}
-
-/* A quotation mark in the corner tells a quote from a note, which has a colored label. */
-.prose .tiptap :where(blockquote)::before {
-  content: '\201C';
-  position: absolute;
-  top: 0.35rem;
-  left: 0.7rem;
-  color: color-mix(in srgb, var(--brand) 45%, transparent);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2.2rem;
-  font-style: normal;
-  line-height: 1;
 }
 
 .prose .tiptap :where(blockquote) > * + * {
