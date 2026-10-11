@@ -8,6 +8,7 @@ import { Callout } from './callout'
 import { CaptionedImage } from './captionedImage'
 import { CodeBlock } from './codeBlock'
 import { LinkEditing } from './linkEditing'
+import { TableKeys } from './tableKeys'
 
 // The stock table adds blank lines around itself, which pile up between blocks.
 const CompactTable = Table.extend({
@@ -30,6 +31,7 @@ export function extensions(placeholder?: string) {
     // Markdown tables have no column widths, so columns size to their content.
     TableKit.configure({ table: false }),
     CompactTable.configure({ resizable: false }),
+    TableKeys,
     TaskList,
     TaskItem.configure({ nested: true }),
     Highlight,

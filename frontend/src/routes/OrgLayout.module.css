@@ -173,8 +173,14 @@
 .content {
   flex: 1;
   min-width: 0;
-  max-width: 60rem;
   padding: 2.5rem 2rem;
+}
+
+/* Each screen sits centered in the space beside the sidebar (and the outline, when docked).
+   Screens set their own narrower widths; :where keeps this from overriding them. */
+:where(.content > *) {
+  max-width: 60rem;
+  margin-inline: auto;
 }
 
 @media (max-width: 720px) {
