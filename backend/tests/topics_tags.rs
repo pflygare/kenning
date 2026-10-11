@@ -227,7 +227,10 @@ async fn tags_are_created_from_pages_and_managed_on_their_own(pool: PgPool) {
     // Lists filter by tag and show each page's tags.
     let (_, list) = ada.get("/api/orgs/acme/pages?tag=hr").await;
     assert_eq!(names(&list, "title"), ["Policy"]);
-    assert_eq!(names(&list[0]["tags"], "color"), ["gray", "gray"]);
+    // New tags get colors no other tag has yet.
+    let colors = names(&list[0]["tags"], "color");
+    assert_ne!(colors[0], colors[1]);
+    assert!(!colors.contains(&"gray".to_string()));
 
     // Rename and recolor; a name another tag already has is refused.
     let (status, renamed) = ada
@@ -238,6 +241,22 @@ async fn tags_are_created_from_pages_and_managed_on_their_own(pool: PgPool) {
         .await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(renamed["color"], "teal");
+    // A custom color is kept, in lowercase; anything else is refused.
+    let (status, custom) = ada
+        .patch(
+            &format!("/api/orgs/acme/tags/{}", tag("how to")),
+            json!({"color": "#1E90FF"}),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(custom["color"], "#1e90ff");
+    let (status, _) = ada
+        .patch(
+            &format!("/api/orgs/acme/tags/{}", tag("how to")),
+            json!({"color": "chartreuse"}),
+        )
+        .await;
+    assert!(status.is_client_error());
     let (status, body) = ada
         .patch(
             &format!("/api/orgs/acme/tags/{}", tag("HR")),

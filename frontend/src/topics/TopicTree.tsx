@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
+import FolderIcon from '../components/FolderIcon'
 import type { Topic } from '../api/types/Topic'
 import { shortIdFrom } from '../pages/format'
 import NewTopicForm from './NewTopicForm'
@@ -73,7 +74,8 @@ export default function TopicTree({
                   isActive ? `${styles.link} ${styles.active}` : styles.link
                 }
               >
-                {topic.name}
+                <FolderIcon className={styles.icon} />
+                <span className={styles.name}>{topic.name}</span>
               </NavLink>
               <button
                 type="button"

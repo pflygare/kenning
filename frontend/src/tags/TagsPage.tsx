@@ -10,7 +10,7 @@ import Popover from '../components/Popover'
 import { useAction } from '../hooks/useAction'
 import { useOrg } from '../routes/useOrg'
 import ColorPicker from './ColorPicker'
-import { tagListPath } from './colors'
+import { labelStyle, tagListPath, unusedColor } from './colors'
 import styles from './TagsPage.module.css'
 
 /** Every tag in the organization: create, rename, recolor, merge and delete. */
@@ -19,7 +19,8 @@ export default function TagsPage() {
   const api = `/orgs/${org.slug}/tags`
   const [tags, setTags] = useState<Tag[] | null>(null)
   const [name, setName] = useState('')
-  const [color, setColor] = useState<TagColor>('blue')
+  // Unset until someone picks one; until then the next unused color is shown.
+  const [color, setColor] = useState<TagColor | null>(null)
   const [renaming, setRenaming] = useState<string | null>(null)
   const action = useAction()
 
@@ -36,11 +37,14 @@ export default function TagsPage() {
     void load()
   }, [load])
 
+  const suggested = unusedColor(tags?.map((t) => t.color) ?? [])
+
   const create = () =>
     action.run(async () => {
-      const body: CreateTagRequest = { name, color }
+      const body: CreateTagRequest = { name, color: color ?? suggested }
       await apiPost(api, body)
       setName('')
+      setColor(null)
       await load()
     })
 
@@ -53,7 +57,11 @@ export default function TagsPage() {
 
   const merge = (tag: Tag, into: Tag) => {
     const pages = tag.page_count === 1 ? '1 page' : `${tag.page_count} pages`
-    if (!window.confirm(`Merge "${tag.name}" into "${into.name}"? ${pages} get "${into.name}" and "${tag.name}" is deleted.`))
+    if (
+      !window.confirm(
+        `Merge "${tag.name}" into "${into.name}"? ${pages} get "${into.name}" and "${tag.name}" is deleted.`,
+      )
+    )
       return
     void action.run(async () => {
       const body: MergeTagRequest = { into_id: into.id }
@@ -87,7 +95,7 @@ export default function TagsPage() {
           void create()
         }}
       >
-        <ColorPicker value={color} onChange={setColor} />
+        <ColorPicker value={color ?? suggested} onChange={setColor} />
         <input
           aria-label="New tag name"
           placeholder="New tag"
@@ -114,7 +122,7 @@ export default function TagsPage() {
                   onCancel={() => setRenaming(null)}
                 />
               ) : (
-                <Link to={tagListPath(org.slug, tag)} className={`tag ${tag.color}`}>
+                <Link to={tagListPath(org.slug, tag)} className="tag" style={labelStyle(tag.color)}>
                   {tag.name}
                 </Link>
               )}
@@ -124,7 +132,11 @@ export default function TagsPage() {
               <Popover label="⋯" ariaLabel={`Actions for ${tag.name}`} triggerClass="small ghost">
                 {(close) => (
                   <div role="menu">
-                    <button className="menu-item" role="menuitem" onClick={() => (close(), setRenaming(tag.id))}>
+                    <button
+                      className="menu-item"
+                      role="menuitem"
+                      onClick={() => (close(), setRenaming(tag.id))}
+                    >
                       Rename
                     </button>
                     {tags.length > 1 && (
@@ -139,13 +151,19 @@ export default function TagsPage() {
                               role="menuitem"
                               onClick={() => (close(), merge(tag, into))}
                             >
-                              <span className={`tag ${into.color}`}>{into.name}</span>
+                              <span className="tag" style={labelStyle(into.color)}>
+                                {into.name}
+                              </span>
                             </button>
                           ))}
                       </>
                     )}
                     <div className="menu-separator" />
-                    <button className="menu-item danger" role="menuitem" onClick={() => (close(), remove(tag))}>
+                    <button
+                      className="menu-item danger"
+                      role="menuitem"
+                      onClick={() => (close(), remove(tag))}
+                    >
                       Delete tag
                     </button>
                   </div>

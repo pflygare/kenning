@@ -879,27 +879,6 @@ a.tag:hover {
   text-decoration: none;
 }
 
-:is(.tag, .category-value).blue {
-  --tag: #2563eb;
-}
-:is(.tag, .category-value).green {
-  --tag: #16a34a;
-}
-:is(.tag, .category-value).amber {
-  --tag: #d97706;
-}
-:is(.tag, .category-value).red {
-  --tag: #dc2626;
-}
-:is(.tag, .category-value).purple {
-  --tag: #9333ea;
-}
-:is(.tag, .category-value).teal {
-  --tag: #0d9488;
-}
-:is(.tag, .category-value).pink {
-  --tag: #db2777;
-}
 
 .topic-chip {
   display: inline-flex;
@@ -914,6 +893,22 @@ a.tag:hover {
   font-weight: 550;
   line-height: 1.5;
   white-space: nowrap;
+}
+
+/* The topic folder, also drawn by components/FolderIcon. */
+.topic-chip::before {
+  content: '';
+  flex: none;
+  width: 0.85em;
+  height: 0.85em;
+  background: currentColor;
+  opacity: 0.7;
+  -webkit-mask: var(--folder-icon) center / contain no-repeat;
+  mask: var(--folder-icon) center / contain no-repeat;
+}
+
+:root {
+  --folder-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z'/%3E%3C/svg%3E");
 }
 
 a.topic-chip:hover {

@@ -12,6 +12,7 @@ import { useTopics } from '../topics/context'
 import { flatten, topicPath } from '../topics/tree'
 import Marked from './Marked'
 import styles from './SearchPage.module.css'
+import { labelStyle } from '../tags/colors'
 
 const FILTERS = ['topic', 'tag', 'value'] as const
 
@@ -89,9 +90,10 @@ function Search() {
           <p>
             Results update as you type; every word matches the start of a word in a title, body or
             tag. Start with a topic's name to search inside it, as in{' '}
-            <code>Engineering: roll back</code>, or narrow with <code>topic:</code>, <code>tag:</code>{' '}
-            or a category, as in <code>tag:how-to</code> or <code>class:internal</code>. Quote names with
-            spaces: <code>topic:"Backend services"</code>.
+            <code>Engineering: roll back</code>, or narrow with <code>topic:</code>,{' '}
+            <code>tag:</code> or a category, as in <code>tag:how-to</code> or{' '}
+            <code>class:internal</code>. Quote names with spaces:{' '}
+            <code>topic:"Backend services"</code>.
           </p>
         </div>
       </div>
@@ -127,7 +129,11 @@ function Search() {
             </option>
           ))}
         </select>
-        <select aria-label="Tag" value={params.get('tag') ?? ''} onChange={(e) => update({ tag: e.target.value })}>
+        <select
+          aria-label="Tag"
+          value={params.get('tag') ?? ''}
+          onChange={(e) => update({ tag: e.target.value })}
+        >
           <option value="">Any tag</option>
           {tags.map((tag) => (
             <option key={tag.id} value={tag.slug}>
@@ -154,7 +160,11 @@ function Search() {
           </select>
         )}
         {filtered && (
-          <button type="button" className="small ghost" onClick={() => update({ topic: '', tag: '', value: '' })}>
+          <button
+            type="button"
+            className="small ghost"
+            onClick={() => update({ topic: '', tag: '', value: '' })}
+          >
             Clear filters
           </button>
         )}
@@ -173,8 +183,8 @@ function Search() {
       )}
       {shown && shown.unmatched.length > 0 && (
         <p className="alert error">
-          Nothing is called {shown.unmatched.map((f) => `“${f}”`).join(' or ')}. Check the topic, tag or
-          category name.
+          Nothing is called {shown.unmatched.map((f) => `“${f}”`).join(' or ')}. Check the topic,
+          tag or category name.
         </p>
       )}
       {shown && shown.scope.length > 0 && (
@@ -221,7 +231,8 @@ function Search() {
                   <Link
                     key={value.id}
                     to={valueListPath(org.slug, value)}
-                    className={`category-value ${value.color}`}
+                    className="category-value"
+                    style={labelStyle(value.color)}
                     title={`${value.category}: ${value.name}`}
                   >
                     {value.name}

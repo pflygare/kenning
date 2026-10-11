@@ -35,6 +35,9 @@
 
 .link {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   min-width: 0;
   padding: 0.3rem 0.5rem;
   border-radius: var(--radius);
@@ -44,6 +47,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.icon {
+  flex: none;
+  width: 0.95rem;
+  height: 0.95rem;
+  opacity: 0.75;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .link:hover {

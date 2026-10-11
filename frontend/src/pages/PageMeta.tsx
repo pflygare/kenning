@@ -14,6 +14,7 @@ import { useTopics } from '../topics/context'
 import TopicChecklist from '../topics/TopicChecklist'
 import { topicPath } from '../topics/tree'
 import styles from './PageMeta.module.css'
+import { labelStyle } from '../tags/colors'
 
 /** The page's topics, tags and category values, editable in place. Changes apply at once, not on publish. */
 export default function PageMeta<
@@ -155,7 +156,7 @@ function CategoryPicker({
 }) {
   const { value } = category
   const label = value ? (
-    <span className={`category-value ${value.color}`}>
+    <span className="category-value" style={labelStyle(value.color)}>
       <span className="category-name">{category.name}</span>
       <span>{value.name}</span>
     </span>
@@ -191,7 +192,9 @@ function CategoryPicker({
                 if (option.id !== value?.id) onPick(option.id)
               }}
             >
-              <span className={`category-value ${option.color}`}>{option.name}</span>
+              <span className="category-value" style={labelStyle(option.color)}>
+                {option.name}
+              </span>
               {option.id === value?.id && <span className={styles.tick}>✓</span>}
             </button>
           ))}
@@ -302,7 +305,9 @@ function TagInput({
               onClick={() => void add(option.name)}
             >
               {option.tag ? (
-                <span className={`tag ${option.tag.color}`}>{option.label}</span>
+                <span className="tag" style={labelStyle(option.tag.color)}>
+                  {option.label}
+                </span>
               ) : (
                 option.label
               )}
