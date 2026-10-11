@@ -1,5 +1,12 @@
 import type { Editor } from '@tiptap/react'
-import { type KeyboardEvent, type MouseEvent, useEffect, useRef, useState } from 'react'
+import {
+  type KeyboardEvent,
+  type MouseEvent,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 import { editImageText, imageSelected } from './captionedImage'
 import { copyLink } from './format'
 import { readHeadings } from './headings'
@@ -24,7 +31,8 @@ function clamp({ x, y }: Point, size: Point): Point {
   }
 }
 
-type Slash = { from: number; to: number; query: string; at: Point }
+/** `at` is just below the "/", `top` the top of its line, for a menu that opens upward. */
+type Slash = { from: number; to: number; query: string; at: Point; top: number }
 
 /** "/" followed by letters at the start of a block or after a space. */
 const SLASH = /(?:^|\s)\/([a-z0-9]*)$/i
@@ -38,7 +46,13 @@ function findSlash(editor: Editor): Slash | null {
   if (!match) return null
   const from = $from.pos - match[1].length - 1
   const coords = editor.view.coordsAtPos(from)
-  return { from, to: $from.pos, query: match[1], at: { x: coords.left, y: coords.bottom + 4 } }
+  return {
+    from,
+    to: $from.pos,
+    query: match[1],
+    at: { x: coords.left, y: coords.bottom + 4 },
+    top: coords.top - 4,
+  }
 }
 
 /**
@@ -71,6 +85,19 @@ export function useSlashMenu(editor: Editor | null) {
 
   const items = slash ? matchFormats(slash.query) : []
   const open = slash !== null && items.length > 0
+  const list = useRef<HTMLDivElement>(null)
+  // Below the line when it fits, otherwise above it, so the menu is never off screen.
+  const [above, setAbove] = useState(false)
+
+  useLayoutEffect(() => {
+    const height = list.current?.offsetHeight
+    if (!slash || !height) return
+    setAbove(slash.at.y + height > window.innerHeight - 8 && slash.top - height >= 8)
+  }, [slash, items.length])
+
+  useLayoutEffect(() => {
+    list.current?.querySelector('[aria-selected=true]')?.scrollIntoView({ block: 'nearest' })
+  }, [index, open])
 
   const choose = (format: Format) => {
     if (!editor || !slash) return
@@ -98,7 +125,11 @@ export function useSlashMenu(editor: Editor | null) {
       className={styles.menu}
       role="listbox"
       aria-label="Block styles"
-      style={{ left: clamp(slash.at, { x: 240, y: 0 }).x, top: slash.at.y }}
+      ref={list}
+      style={{
+        left: clamp(slash.at, { x: 240, y: 0 }).x,
+        ...(above ? { bottom: window.innerHeight - slash.top } : { top: slash.at.y }),
+      }}
       onMouseDown={(e) => e.preventDefault()}
     >
       {items.map((format, i) => (
