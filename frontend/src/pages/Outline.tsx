@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { copyLink } from './format'
 import type { Heading } from './headings'
 import styles from './Outline.module.css'
@@ -6,17 +6,23 @@ import styles from './Outline.module.css'
 /** Where headings stop counting as "passed" while scrolling: below the sticky app bar. */
 const READING_LINE = 96
 
+/** Wide enough for the docked column (see Outline.module.css and `main:has(.outline-dock)`). */
+export const DOCK_QUERY = '(min-width: 68.0625rem)'
+
 /**
- * The page's headings in a panel docked to the window's right edge. Follows along as you
- * scroll and jumps on click; shows nothing when there are no headings.
+ * The page's headings in a panel docked to the window's right edge, under the page's
+ * `actions` if any. Follows along as you scroll and jumps on click; shows nothing when there
+ * are neither headings nor actions.
  */
 export default function Outline({
   headings,
   linkBase,
+  actions,
 }: {
   headings: Heading[]
   /** The page's address; each heading then gets a button that copies a link to it. */
   linkBase?: string
+  actions?: ReactNode
 }) {
   const [current, setCurrent] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -60,47 +66,50 @@ export default function Outline({
     return () => window.clearTimeout(timer)
   }, [copied])
 
-  if (!headings.length) return null
+  if (!headings.length && !actions) return null
 
   const top = Math.min(...headings.map((h) => h.level))
   return (
     <aside className={`${styles.dock} outline-dock`}>
-      <nav className={styles.outline} aria-label="Outline">
-        <p className={styles.title}>Outline</p>
-        <ul>
-          {headings.map((h) => (
-            <li key={h.id} style={{ paddingLeft: `${(h.level - top) * 0.875}rem` }}>
-              <a
-                href={`#${h.id}`}
-                className={h.id === current ? styles.current : undefined}
-                aria-current={h.id === current ? 'location' : undefined}
-                onClick={(e) => {
-                  e.preventDefault()
-                  h.element.scrollIntoView({ behavior: 'smooth' })
-                  history.replaceState(history.state, '', `#${h.id}`)
-                  setCurrent(h.id)
-                }}
-              >
-                {h.text}
-              </a>
-              {linkBase && (
-                <button
-                  type="button"
-                  className={styles.copy}
-                  title="Copy a link to this section"
-                  aria-label={`Copy a link to ${h.text}`}
-                  onClick={() => {
-                    void copyLink(`${linkBase}#${encodeURIComponent(h.id)}`)
-                    setCopied(h.id)
+      {actions && <div className={styles.actions}>{actions}</div>}
+      {headings.length > 0 && (
+        <nav className={styles.outline} aria-label="Outline">
+          <p className={styles.title}>Outline</p>
+          <ul>
+            {headings.map((h) => (
+              <li key={h.id} style={{ paddingLeft: `${(h.level - top) * 0.875}rem` }}>
+                <a
+                  href={`#${h.id}`}
+                  className={h.id === current ? styles.current : undefined}
+                  aria-current={h.id === current ? 'location' : undefined}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    h.element.scrollIntoView({ behavior: 'smooth' })
+                    history.replaceState(history.state, '', `#${h.id}`)
+                    setCurrent(h.id)
                   }}
                 >
-                  {copied === h.id ? '✓' : '🔗'}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
+                  {h.text}
+                </a>
+                {linkBase && (
+                  <button
+                    type="button"
+                    className={styles.copy}
+                    title="Copy a link to this section"
+                    aria-label={`Copy a link to ${h.text}`}
+                    onClick={() => {
+                      void copyLink(`${linkBase}#${encodeURIComponent(h.id)}`)
+                      setCopied(h.id)
+                    }}
+                  >
+                    {copied === h.id ? '✓' : '🔗'}
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
     </aside>
   )
 }

@@ -6,11 +6,12 @@ import type { PageDetail } from '../api/types/PageDetail'
 import type { PublishRequest } from '../api/types/PublishRequest'
 import type { TemplateDetail } from '../api/types/TemplateDetail'
 import { useAction } from '../hooks/useAction'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { copyLink, pagePath, timeAgo } from './format'
 import MarkdownView from './MarkdownView'
 import type { Heading } from './headings'
 import LinkPreviews from './LinkPreviews'
-import Outline from './Outline'
+import Outline, { DOCK_QUERY } from './Outline'
 import SectionLinks from './SectionLinks'
 import PageMeta from './PageMeta'
 import styles from './PageView.module.css'
@@ -24,6 +25,9 @@ export default function PageView() {
   const action = useAction()
   const [headings, setHeadings] = useState<Heading[]>([])
   const more = useRef<HTMLDetailsElement>(null)
+  // With room for the docked column, the page's buttons sit above the outline and categories
+  // take their place beside the title; otherwise both stay in the page.
+  const docked = useMediaQuery(DOCK_QUERY)
 
   // The ⋯ menu closes on a click outside it and on Escape, like other menus.
   useEffect(() => {
@@ -94,6 +98,44 @@ export default function PageView() {
     })
   }
 
+  const actions = (
+    <div className="row">
+      {!page.draft && (
+        <Link className="button" to={`${here}/edit`}>
+          Edit
+        </Link>
+      )}
+      <details ref={more} className={styles.more}>
+        <summary className="button" aria-label="More actions">
+          ⋯
+        </summary>
+        <div
+          className={styles.menu}
+          onClick={(e) => {
+            // Choosing an item closes the menu.
+            if ((e.target as Element).closest('a, button')) more.current!.open = false
+          }}
+        >
+          <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
+            Page history
+          </Link>
+          <button onClick={() => void copyLink(here)}>Copy link</button>
+          <button onClick={saveAsTemplate} disabled={action.busy}>
+            Save as template
+          </button>
+          {page.draft && page.published && (
+            <button onClick={discard} disabled={action.busy}>
+              Discard unpublished changes
+            </button>
+          )}
+          <button className="danger" onClick={archive} disabled={action.busy}>
+            Archive page
+          </button>
+        </div>
+      </details>
+    </div>
+  )
+
   return (
     <>
       <article className={styles.page}>
@@ -142,41 +184,18 @@ export default function PageView() {
         />
         <header className={styles.header}>
           <h1>{shown.title}</h1>
-          <div className="row">
-            {!page.draft && (
-              <Link className="button" to={`${here}/edit`}>
-                Edit
-              </Link>
-            )}
-            <details ref={more} className={styles.more}>
-              <summary className="button" aria-label="More actions">
-                ⋯
-              </summary>
-              <div
-                className={styles.menu}
-                onClick={(e) => {
-                  // Choosing an item closes the menu.
-                  if ((e.target as Element).closest('a, button')) more.current!.open = false
-                }}
-              >
-                <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
-                  Page history
-                </Link>
-                <button onClick={() => void copyLink(here)}>Copy link</button>
-                <button onClick={saveAsTemplate} disabled={action.busy}>
-                  Save as template
-                </button>
-                {page.draft && page.published && (
-                  <button onClick={discard} disabled={action.busy}>
-                    Discard unpublished changes
-                  </button>
-                )}
-                <button className="danger" onClick={archive} disabled={action.busy}>
-                  Archive page
-                </button>
-              </div>
-            </details>
-          </div>
+          {docked ? (
+            <PageMeta
+              org={org.slug}
+              api={api}
+              page={page}
+              onChange={setPage}
+              parts={['categories']}
+              className={styles.categories}
+            />
+          ) : (
+            actions
+          )}
         </header>
         <p className="muted">
           {page.published
@@ -192,7 +211,7 @@ export default function PageView() {
           api={api}
           page={page}
           onChange={setPage}
-          parts={['topics', 'categories']}
+          parts={docked ? ['topics'] : ['topics', 'categories']}
         />
 
         {shown.body_md.trim() ? (
@@ -213,7 +232,12 @@ export default function PageView() {
           <p className="muted">This page is empty.</p>
         )}
       </article>
-      {shown.body_md.trim() && <Outline key={page.short_id} headings={headings} linkBase={here} />}
+      <Outline
+        key={page.short_id}
+        headings={shown.body_md.trim() ? headings : []}
+        linkBase={here}
+        actions={docked ? actions : undefined}
+      />
     </>
   )
 }
