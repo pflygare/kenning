@@ -5,6 +5,7 @@ import { copyLink } from './format'
 import { readHeadings } from './headings'
 import {
   blockFormats,
+  editLink,
   type Format,
   insertFormats,
   matchFormats,
@@ -342,6 +343,12 @@ export function useContextMenu(editor: Editor | null, linkBase?: string) {
             {format.label}
           </button>
         ))}
+        {editor.isActive('link') && (
+          <button type="button" role="menuitem" onClick={() => run(() => editLink(editor))}>
+            <span className={styles.icon}>✎</span>
+            Edit link…
+          </button>
+        )}
         {editor.isActive('link') && (
           <button
             type="button"

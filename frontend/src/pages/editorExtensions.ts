@@ -7,6 +7,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { Callout } from './callout'
 import { CaptionedImage } from './captionedImage'
 import { CodeBlock } from './codeBlock'
+import { LinkEditing } from './linkEditing'
 
 // The stock table adds blank lines around itself, which pile up between blocks.
 const CompactTable = Table.extend({
@@ -32,6 +33,7 @@ export function extensions(placeholder?: string) {
     TaskList,
     TaskItem.configure({ nested: true }),
     Highlight,
+    LinkEditing,
     Markdown,
     ...(placeholder ? [Placeholder.configure({ placeholder })] : []),
   ]

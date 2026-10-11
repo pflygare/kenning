@@ -14,6 +14,7 @@
   --brand-hover: #1d4ed8;
   --brand-soft: #eff4ff;
   --brand-strong: #1e3a8a;
+  --link: #1d4ed8;
   --danger: #dc2626;
   --danger-soft: #fef2f2;
   --success: #15803d;
@@ -27,7 +28,14 @@
   --focus: 0 0 0 3px rgb(37 99 235 / 25%);
 
   font-family:
-    Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    Inter,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
   font-size: 15px;
   line-height: 1.5;
   color: var(--text);
@@ -37,7 +45,7 @@
 
 /* Dark tokens: follow the system unless the person picked a theme (data-theme on <html>). */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
     --bg: #0b1120;
     --surface: #111a2e;
@@ -51,6 +59,7 @@
     --brand-hover: #60a5fa;
     --brand-soft: #172554;
     --brand-strong: #bfdbfe;
+    --link: #93c5fd;
     --danger: #f87171;
     --danger-soft: #3b1219;
     --success: #4ade80;
@@ -62,7 +71,7 @@
   }
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   color-scheme: dark;
   --bg: #0b1120;
   --surface: #111a2e;
@@ -76,6 +85,7 @@
   --brand-hover: #60a5fa;
   --brand-soft: #172554;
   --brand-strong: #bfdbfe;
+  --link: #93c5fd;
   --danger: #f87171;
   --danger-soft: #3b1219;
   --success: #4ade80;
@@ -539,28 +549,29 @@ button.small {
 .prose .tiptap :where(blockquote) {
   position: relative;
   margin: 0;
-  padding: 0.125rem 0 0.125rem 2.75rem;
-  color: var(--text);
-  font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
-  font-size: 1.08em;
+  padding: 0.75rem 1.1rem 0.75rem 2.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  color: color-mix(in srgb, var(--text) 72%, var(--brand));
   font-style: italic;
-  line-height: 1.6;
 }
 
-/* A large opening quotation mark sets a quote apart from notes, which are boxes. */
+/* A quotation mark in the corner tells a quote from a note, which has a colored label. */
 .prose .tiptap :where(blockquote)::before {
   content: '\201C';
   position: absolute;
-  top: -0.2em;
-  left: 0.2rem;
-  color: color-mix(in srgb, var(--brand) 55%, transparent);
-  font-size: 3.4em;
+  top: 0.35rem;
+  left: 0.7rem;
+  color: color-mix(in srgb, var(--brand) 45%, transparent);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2.2rem;
   font-style: normal;
   line-height: 1;
 }
 
 .prose .tiptap :where(blockquote) > * + * {
-  margin-top: 0.6em;
+  margin-top: 0.5em;
 }
 
 .prose .tiptap :where(blockquote) :where(code, pre) {
@@ -705,7 +716,20 @@ button.small {
   color: var(--code-string);
 }
 
-.prose .tiptap pre :is(.hljs-number, .hljs-literal, .hljs-attr, .hljs-attribute, .hljs-built_in, .hljs-symbol, .hljs-selector-attr, .hljs-variable, .hljs-property) {
+.prose
+  .tiptap
+  pre
+  :is(
+    .hljs-number,
+    .hljs-literal,
+    .hljs-attr,
+    .hljs-attribute,
+    .hljs-built_in,
+    .hljs-symbol,
+    .hljs-selector-attr,
+    .hljs-variable,
+    .hljs-property
+  ) {
   color: var(--code-number);
 }
 
@@ -722,7 +746,10 @@ button.small {
   font-style: italic;
 }
 
-.prose .tiptap pre :is(.hljs-name, .hljs-tag, .hljs-selector-tag, .hljs-selector-class, .hljs-selector-id) {
+.prose
+  .tiptap
+  pre
+  :is(.hljs-name, .hljs-tag, .hljs-selector-tag, .hljs-selector-class, .hljs-selector-id) {
   color: var(--code-tag);
 }
 
@@ -751,8 +778,59 @@ button.small {
 }
 
 .prose .tiptap a {
+  color: var(--link);
   text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--link) 45%, transparent);
   text-underline-offset: 2px;
+}
+
+.prose .tiptap a:hover {
+  text-decoration-color: currentColor;
+}
+
+/*
+ * Links to Kenning pages are paths and read as a tinted chip with a page icon; links that
+ * leave Kenning keep the underline and get an arrow. The icons are backgrounds, not
+ * pseudo-elements, which would throw off where clicks put the cursor in the editor.
+ */
+.prose {
+  --page-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 15'%3E%3Cpath fill='%231d4ed8' fill-rule='evenodd' d='M1.5 0h6L12 4.5v9A1.5 1.5 0 0 1 10.5 15h-9A1.5 1.5 0 0 1 0 13.5v-12A1.5 1.5 0 0 1 1.5 0Zm0 1.5v12h9V5.5H6.5v-4Zm6.5.6V4h1.9ZM2.8 8h6.4v1.2H2.8Zm0 2.6h6.4v1.2H2.8Z'/%3E%3C/svg%3E");
+  --out-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%231d4ed8' stroke-width='1.4' d='M3 1.5h5.5V7M8.5 1.5 1.5 8.5'/%3E%3C/svg%3E");
+}
+
+:root[data-theme='dark'] .prose {
+  --page-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 15'%3E%3Cpath fill='%2393c5fd' fill-rule='evenodd' d='M1.5 0h6L12 4.5v9A1.5 1.5 0 0 1 10.5 15h-9A1.5 1.5 0 0 1 0 13.5v-12A1.5 1.5 0 0 1 1.5 0Zm0 1.5v12h9V5.5H6.5v-4Zm6.5.6V4h1.9ZM2.8 8h6.4v1.2H2.8Zm0 2.6h6.4v1.2H2.8Z'/%3E%3C/svg%3E");
+  --out-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%2393c5fd' stroke-width='1.4' d='M3 1.5h5.5V7M8.5 1.5 1.5 8.5'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .prose {
+    --page-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 15'%3E%3Cpath fill='%2393c5fd' fill-rule='evenodd' d='M1.5 0h6L12 4.5v9A1.5 1.5 0 0 1 10.5 15h-9A1.5 1.5 0 0 1 0 13.5v-12A1.5 1.5 0 0 1 1.5 0Zm0 1.5v12h9V5.5H6.5v-4Zm6.5.6V4h1.9ZM2.8 8h6.4v1.2H2.8Zm0 2.6h6.4v1.2H2.8Z'/%3E%3C/svg%3E");
+    --out-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%2393c5fd' stroke-width='1.4' d='M3 1.5h5.5V7M8.5 1.5 1.5 8.5'/%3E%3C/svg%3E");
+  }
+}
+
+.prose .tiptap a[href^='/']:not([href^='//']) {
+  padding: 0 0.3em 0 1.25em;
+  border-radius: 4px;
+  background:
+    var(--page-icon) no-repeat 0.3em 50% / 0.7em auto,
+    color-mix(in srgb, var(--link) 11%, transparent);
+  font-weight: 500;
+  text-decoration: none;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.prose .tiptap a[href^='/']:not([href^='//']):hover {
+  background:
+    var(--page-icon) no-repeat 0.3em 50% / 0.7em auto,
+    color-mix(in srgb, var(--link) 20%, transparent);
+}
+
+.prose .tiptap :is(a[href^='http:'], a[href^='https:'], a[href^='mailto:']) {
+  padding-right: 0.8em;
+  background: var(--out-icon) no-repeat 100% 30% / 0.6em auto;
 }
 
 .prose .tiptap p.is-editor-empty:first-child::before {
@@ -793,8 +871,16 @@ button.small {
   background: color-mix(in srgb, var(--tag) 16%, transparent);
   color: color-mix(in srgb, var(--tag) 75%, var(--text));
   clip-path: polygon(var(--point) 0, 100% 0, 100% 100%, var(--point) 100%, 0 50%);
-  -webkit-mask: radial-gradient(circle at calc(var(--point) + 0.05rem) 50%, transparent 0.16rem, #000 0.17rem);
-  mask: radial-gradient(circle at calc(var(--point) + 0.05rem) 50%, transparent 0.16rem, #000 0.17rem);
+  -webkit-mask: radial-gradient(
+    circle at calc(var(--point) + 0.05rem) 50%,
+    transparent 0.16rem,
+    #000 0.17rem
+  );
+  mask: radial-gradient(
+    circle at calc(var(--point) + 0.05rem) 50%,
+    transparent 0.16rem,
+    #000 0.17rem
+  );
   font-size: 0.78rem;
   font-weight: 550;
   line-height: 1.5;
@@ -806,13 +892,27 @@ a.tag:hover {
   text-decoration: none;
 }
 
-:is(.tag, .category-value).blue { --tag: #2563eb; }
-:is(.tag, .category-value).green { --tag: #16a34a; }
-:is(.tag, .category-value).amber { --tag: #d97706; }
-:is(.tag, .category-value).red { --tag: #dc2626; }
-:is(.tag, .category-value).purple { --tag: #9333ea; }
-:is(.tag, .category-value).teal { --tag: #0d9488; }
-:is(.tag, .category-value).pink { --tag: #db2777; }
+:is(.tag, .category-value).blue {
+  --tag: #2563eb;
+}
+:is(.tag, .category-value).green {
+  --tag: #16a34a;
+}
+:is(.tag, .category-value).amber {
+  --tag: #d97706;
+}
+:is(.tag, .category-value).red {
+  --tag: #dc2626;
+}
+:is(.tag, .category-value).purple {
+  --tag: #9333ea;
+}
+:is(.tag, .category-value).teal {
+  --tag: #0d9488;
+}
+:is(.tag, .category-value).pink {
+  --tag: #db2777;
+}
 
 .topic-chip {
   display: inline-flex;

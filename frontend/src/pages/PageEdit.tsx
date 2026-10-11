@@ -12,6 +12,7 @@ import { pagePath } from './format'
 import { useHeadings } from './headings'
 import { ImageUpload } from './imageUpload'
 import LinkPreviews from './LinkPreviews'
+import { useLinkEditor } from './LinkEditor'
 import PageLinkPicker from './PageLinkPicker'
 import { PageLinks } from './pageLinks'
 import Outline from './Outline'
@@ -74,6 +75,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
   const headings = useHeadings(editor)
   const slashMenu = useSlashMenu(editor)
   const contextMenu = useContextMenu(editor, pagePath(orgSlug, page))
+  const linkEditor = useLinkEditor(editor, orgSlug)
 
   const save = useCallback(async () => {
     if (!editor || !pending.current) return
@@ -232,6 +234,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
       </div>
       {slashMenu.menu}
       {contextMenu.menu}
+      {linkEditor}
       {linking && editor && <PageLinkPicker editor={editor} org={orgSlug} onClose={closePicker} />}
       <Outline headings={headings} linkBase={pagePath(orgSlug, page)} />
       <p className="muted" style={{ marginTop: '2rem' }}>

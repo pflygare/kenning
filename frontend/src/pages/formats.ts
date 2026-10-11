@@ -198,7 +198,9 @@ export const tableActions: { label: string; icon: string; run: (editor: Editor) 
   { label: 'Delete table', icon: '✕', run: (e) => chain(e).deleteTable().run() },
 ]
 
+/** Opens the link editor, or asks for an address where the screen has none. */
 export function editLink(editor: Editor) {
+  if (editor.commands.editLink()) return
   const previous = editor.getAttributes('link').href as string | undefined
   const url = window.prompt('Link address', previous ?? 'https://')
   if (url === null) return
