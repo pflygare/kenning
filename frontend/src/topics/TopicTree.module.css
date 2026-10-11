@@ -52,6 +52,38 @@
   text-decoration: none;
 }
 
+.add {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 0.125rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0;
+}
+
+.row:hover .add,
+.add:focus-visible {
+  opacity: 1;
+}
+
+.add:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+@media (hover: none) {
+  .add {
+    opacity: 1;
+  }
+}
+
 .active,
 .active:hover {
   background: var(--brand-soft);

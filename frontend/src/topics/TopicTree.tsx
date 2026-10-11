@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import type { Topic } from '../api/types/Topic'
 import { shortIdFrom } from '../pages/format'
+import NewTopicForm from './NewTopicForm'
 import styles from './TopicTree.module.css'
 import { ancestorIds, childrenOf, topicPath } from './tree'
 
 /**
  * The sidebar's topic tree. Branches open to show the topic being viewed. With `filter`,
  * only topics whose names contain it are shown, with the branches leading to them open.
+ * Each row has a + that adds a sub-topic in place.
  */
 export default function TopicTree({
   org,
@@ -23,6 +25,8 @@ export default function TopicTree({
   const current = match ? topics.find((t) => t.short_id === shortIdFrom(match[1])) : undefined
   // Branches someone opened or closed; the rest open only on the way to the current topic.
   const [toggled, setToggled] = useState<Map<string, boolean>>(new Map())
+  // The topic a sub-topic is being added to, whose branch stays open meanwhile.
+  const [adding, setAdding] = useState<string | null>(null)
   const ancestors = current ? ancestorIds(topics, current.id) : []
   const words = filter.toLowerCase().split(/\s+/).filter(Boolean)
   const shown = words.length
@@ -34,11 +38,17 @@ export default function TopicTree({
     : null
   const visible = (parentId: string | null) =>
     childrenOf(topics, parentId).filter((t) => !shown || shown.has(t.id))
-  const isOpen = (id: string) => (shown ? true : (toggled.get(id) ?? ancestors.includes(id)))
+  const isOpen = (id: string) =>
+    shown || adding === id ? true : (toggled.get(id) ?? ancestors.includes(id))
   const toggle = (id: string) => setToggled((prev) => new Map(prev).set(id, !isOpen(id)))
 
   const branch = (parentId: string | null, depth: number) => (
     <ul className={styles.list} role={depth === 0 ? 'tree' : 'group'}>
+      {parentId && adding === parentId && (
+        <li style={{ paddingLeft: `${depth * 0.875 + 1.25}rem` }}>
+          <NewTopicForm org={org} parentId={parentId} compact onClose={() => setAdding(null)} />
+        </li>
+      )}
       {visible(parentId).map((topic) => {
         const kids = visible(topic.id).length > 0
         const expanded = isOpen(topic.id)
@@ -65,8 +75,20 @@ export default function TopicTree({
               >
                 {topic.name}
               </NavLink>
+              <button
+                type="button"
+                className={styles.add}
+                aria-label={`Add a sub-topic to ${topic.name}`}
+                title="Add a sub-topic"
+                onClick={() => {
+                  setAdding(topic.id)
+                  setToggled((prev) => new Map(prev).set(topic.id, true))
+                }}
+              >
+                +
+              </button>
             </div>
-            {kids && expanded && branch(topic.id, depth + 1)}
+            {(kids || adding === topic.id) && expanded && branch(topic.id, depth + 1)}
           </li>
         )
       })}
