@@ -12,4 +12,8 @@ published: Version | null, published_at: string | null, published_by_name: strin
 /**
  * Unpublished changes, when there are any.
  */
-draft: Version | null, created_at: string, topics: Array<TopicRef>, tags: Array<TagRef>, categories: Array<PageCategory>, };
+draft: Version | null, created_at: string, 
+/**
+ * Everyone who wrote a version that wasn't discarded, earliest first.
+ */
+authors: Array<string>, topics: Array<TopicRef>, tags: Array<TagRef>, categories: Array<PageCategory>, };

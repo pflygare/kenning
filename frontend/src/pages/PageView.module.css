@@ -74,34 +74,37 @@
   text-decoration: none;
 }
 
-.historyLink {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-  text-underline-offset: 2px;
+/* The page's details beside it: a column to its left, staying in view while scrolling. */
+.layout {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 46rem);
+  gap: 2.5rem;
+  max-width: 63.5rem;
+  margin-inline: auto;
 }
 
-/* The page's details: a box like the outline's, beside the page or under its title. */
+.side {
+  position: sticky;
+  top: 5.75rem;
+  align-self: start;
+  max-height: calc(100vh - 7.5rem);
+  overflow-y: auto;
+}
+
+/* The page's details: a box like the outline's. */
 .details {
-  flex: none;
   display: flex;
   flex-direction: column;
   margin: 0 0 1.75rem;
-  padding: 1rem 1.25rem 1.125rem;
+  padding: 0.25rem 1.25rem 1.125rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
 
-:global(.outline-dock) .details {
+.side .details {
   margin: 0;
-}
-
-.byline {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.8rem;
 }
 
 .label {
@@ -111,6 +114,23 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.facts dt {
+  color: var(--text-muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .part {
@@ -123,7 +143,7 @@
   align-items: flex-start;
 }
 
-/* The page's buttons, above its details in the docked column. */
+/* The page's buttons, above the outline in the docked column. */
 .dockActions {
   display: flex;
   flex: none;

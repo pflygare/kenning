@@ -91,6 +91,8 @@ pub struct PageDetail {
     /// Unpublished changes, when there are any.
     pub draft: Option<Version>,
     pub created_at: DateTime<Utc>,
+    /// Everyone who wrote a version that wasn't discarded, earliest first.
+    pub authors: Vec<String>,
     pub topics: Vec<TopicRef>,
     pub tags: Vec<TagRef>,
     pub categories: Vec<PageCategory>,
@@ -367,6 +369,17 @@ pub(crate) async fn version(conn: &mut PgConnection, revision_id: Uuid) -> sqlx:
     .await
 }
 
+async fn authors(conn: &mut PgConnection, page_id: Uuid) -> sqlx::Result<Vec<String>> {
+    sqlx::query_scalar(
+        "SELECT u.name FROM page_revisions r JOIN users u ON u.id = r.author_id
+         WHERE r.page_id = $1 AND r.discarded_at IS NULL
+         GROUP BY u.id, u.name ORDER BY min(r.created_at)",
+    )
+    .bind(page_id)
+    .fetch_all(conn)
+    .await
+}
+
 pub async fn detail(conn: &mut PgConnection, short_id: &str) -> AppResult<PageDetail> {
     let page = find(conn, short_id, false).await?;
     let published = match page.published_revision_id {
@@ -387,6 +400,7 @@ pub async fn detail(conn: &mut PgConnection, short_id: &str) -> AppResult<PageDe
         published_by_name: page.published_by_name,
         draft,
         created_at: page.created_at,
+        authors: authors(conn, page.id).await?,
         topics: topics::for_page(conn, page.id).await?,
         tags: tags::for_page(conn, page.id).await?,
         categories: categories::for_page(conn, page.id).await?,

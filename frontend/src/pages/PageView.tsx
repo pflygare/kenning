@@ -7,7 +7,7 @@ import type { PublishRequest } from '../api/types/PublishRequest'
 import type { TemplateDetail } from '../api/types/TemplateDetail'
 import { useAction } from '../hooks/useAction'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { copyLink, pagePath, timeAgo } from './format'
+import { copyLink, dateOnly, dateTime, pagePath, timeAgo } from './format'
 import MarkdownView from './MarkdownView'
 import type { Heading } from './headings'
 import LinkPreviews from './LinkPreviews'
@@ -15,6 +15,9 @@ import Outline, { DOCK_QUERY } from './Outline'
 import SectionLinks from './SectionLinks'
 import PageMeta from './PageMeta'
 import styles from './PageView.module.css'
+
+/** Wide enough for the details beside the page as well as the outline. */
+const BESIDE_QUERY = '(min-width: 88rem)'
 import { usePage } from './usePage'
 
 /** A page as readers see it, with the draft controls for editors. */
@@ -25,9 +28,10 @@ export default function PageView() {
   const action = useAction()
   const [headings, setHeadings] = useState<Heading[]>([])
   const more = useRef<HTMLDetailsElement>(null)
-  // With room for the docked column, the page's buttons and details sit above the outline;
-  // otherwise they stay in the page, under the title.
+  // With room for the docked column, the page's buttons sit above the outline; with room for
+  // another column too, the page's details sit to its left. Otherwise both stay in the page.
   const docked = useMediaQuery(DOCK_QUERY)
+  const besidePage = useMediaQuery(BESIDE_QUERY)
 
   // The ⋯ menu closes on a click outside it and on Escape, like other menus.
   useEffect(() => {
@@ -136,27 +140,22 @@ export default function PageView() {
     </div>
   )
 
-  // Who published it, its topics, tags and categories: a box beside the page, like the outline.
+  const changed = page.draft?.updated_at ?? page.published_at ?? page.created_at
+  // About the page, then its topics, categories and tags: a box like the outline, to the left
+  // of the page when there's room, else under its title.
   const details = (
     <section className={styles.details} aria-label="Page details">
-      <p className={styles.byline}>
-        {page.published
-          ? `Published by ${page.published_by_name} · ${timeAgo(page.published_at!)}`
-          : `Started by ${shown.author_name} · ${timeAgo(page.created_at)}`}
-        {' · '}
-        <Link className={styles.historyLink} to={`${here}/history`}>
-          History
-        </Link>
-      </p>
-      <h2 className={styles.label}>Tags</h2>
-      <PageMeta
-        org={org.slug}
-        api={api}
-        page={page}
-        onChange={setPage}
-        parts={['tags']}
-        className={styles.part}
-      />
+      <h2 className={styles.label}>About</h2>
+      <dl className={styles.facts}>
+        <dt>Title</dt>
+        <dd>{shown.title}</dd>
+        <dt>{page.authors.length === 1 ? 'Author' : 'Authors'}</dt>
+        <dd>{page.authors.join(', ')}</dd>
+        <dt>Created</dt>
+        <dd title={dateTime(page.created_at)}>{dateOnly(page.created_at)}</dd>
+        <dt>Last changed</dt>
+        <dd title={dateTime(changed)}>{timeAgo(changed)}</dd>
+      </dl>
       <h2 className={styles.label}>Topics</h2>
       <PageMeta
         org={org.slug}
@@ -179,11 +178,21 @@ export default function PageView() {
           />
         </>
       )}
+      <h2 className={styles.label}>Tags</h2>
+      <PageMeta
+        org={org.slug}
+        api={api}
+        page={page}
+        onChange={setPage}
+        parts={['tags']}
+        className={styles.part}
+      />
     </section>
   )
 
   return (
-    <>
+    <div className={besidePage ? styles.layout : undefined}>
+      {besidePage && <div className={styles.side}>{details}</div>}
       <article className={styles.page}>
         {page.draft && (
           <div className={`notice ${styles.banner}`}>
@@ -224,7 +233,7 @@ export default function PageView() {
           <h1>{shown.title}</h1>
           {!docked && actions}
         </header>
-        {!docked && details}
+        {!besidePage && details}
 
         {shown.body_md.trim() ? (
           <LinkPreviews
@@ -248,15 +257,8 @@ export default function PageView() {
         key={page.short_id}
         headings={shown.body_md.trim() ? headings : []}
         linkBase={here}
-        above={
-          docked ? (
-            <>
-              <div className={styles.dockActions}>{actions}</div>
-              {details}
-            </>
-          ) : undefined
-        }
+        above={docked ? <div className={styles.dockActions}>{actions}</div> : undefined}
       />
-    </>
+    </div>
   )
 }

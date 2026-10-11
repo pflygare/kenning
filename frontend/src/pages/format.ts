@@ -37,6 +37,11 @@ export function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString()
 }
 
+/** "10 Oct 2026" in the reader's locale. */
+export function dateOnly(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
+}
+
 /** "10 Oct 2026, 16:59" in the reader's locale. */
 export function dateTime(iso: string): string {
   return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
