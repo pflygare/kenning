@@ -15,6 +15,7 @@ import LinkPreviews from './LinkPreviews'
 import PageLinkPicker from './PageLinkPicker'
 import { PageLinks } from './pageLinks'
 import Outline from './Outline'
+import SectionLinks from './SectionLinks'
 import PageMeta from './PageMeta'
 import styles from './PageEdit.module.css'
 import Toolbar from './Toolbar'
@@ -72,7 +73,7 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
 
   const headings = useHeadings(editor)
   const slashMenu = useSlashMenu(editor)
-  const contextMenu = useContextMenu(editor)
+  const contextMenu = useContextMenu(editor, pagePath(orgSlug, page))
 
   const save = useCallback(async () => {
     if (!editor || !pending.current) return
@@ -224,7 +225,9 @@ function Editor({ orgSlug, api, page }: { orgSlug: string; api: string; page: Pa
         onContextMenu={contextMenu.onContextMenu}
       >
         <LinkPreviews org={orgSlug}>
-          <EditorContent editor={editor} className={`prose ${styles.body}`} />
+          <SectionLinks headings={headings} linkBase={pagePath(orgSlug, page)}>
+            <EditorContent editor={editor} className={`prose ${styles.body}`} />
+          </SectionLinks>
         </LinkPreviews>
       </div>
       {slashMenu.menu}

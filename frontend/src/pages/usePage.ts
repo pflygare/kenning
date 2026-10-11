@@ -9,7 +9,8 @@ import { shortIdFrom } from './format'
 export function usePage() {
   const org = useOrg()
   const { page: ref = '' } = useParams()
-  const api = `/orgs/${org.slug}/pages/${shortIdFrom(ref)}`
+  const shortId = shortIdFrom(ref)
+  const api = `/orgs/${org.slug}/pages/${shortId}`
   const [page, setPage] = useState<PageDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -28,5 +29,7 @@ export function usePage() {
     void reload()
   }, [reload])
 
-  return { org, api, page, setPage, error, reload }
+  // Following a link to another page keeps this hook; until that page arrives, show none.
+  const current = page?.short_id === shortId ? page : null
+  return { org, api, page: current, setPage, error, reload }
 }

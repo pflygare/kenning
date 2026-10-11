@@ -11,6 +11,7 @@ import MarkdownView from './MarkdownView'
 import type { Heading } from './headings'
 import LinkPreviews from './LinkPreviews'
 import Outline from './Outline'
+import SectionLinks from './SectionLinks'
 import PageMeta from './PageMeta'
 import styles from './PageView.module.css'
 import { usePage } from './usePage'
@@ -177,7 +178,9 @@ export default function PageView() {
               history.replaceState(history.state, '', `#${encodeURIComponent(id)}`)
             }}
           >
-            <MarkdownView markdown={shown.body_md} onHeadings={setHeadings} />
+            <SectionLinks headings={headings} linkBase={here}>
+              <MarkdownView markdown={shown.body_md} onHeadings={setHeadings} />
+            </SectionLinks>
           </LinkPreviews>
         ) : (
           <p className="muted">This page is empty.</p>
