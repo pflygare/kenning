@@ -1,0 +1,35 @@
+.box {
+  position: relative;
+}
+
+/* In the margin left of the heading, centered on its first line. */
+.button {
+  position: absolute;
+  left: -2.1rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  box-shadow: none;
+  font-size: 0.85rem;
+  opacity: 0.65;
+}
+
+/* Covers the gap to the heading, so the pointer can cross it. */
+.button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: 0.5rem;
+}
+
+.button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+  opacity: 1;
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { apiDelete, apiPost } from '../api/client'
 import type { CreateTemplateRequest } from '../api/types/CreateTemplateRequest'
@@ -6,10 +6,12 @@ import type { PageDetail } from '../api/types/PageDetail'
 import type { PublishRequest } from '../api/types/PublishRequest'
 import type { TemplateDetail } from '../api/types/TemplateDetail'
 import { useAction } from '../hooks/useAction'
-import { pagePath, timeAgo } from './format'
+import { copyLink, pagePath, timeAgo } from './format'
 import MarkdownView from './MarkdownView'
 import type { Heading } from './headings'
+import LinkPreviews from './LinkPreviews'
 import Outline from './Outline'
+import SectionLinks from './SectionLinks'
 import PageMeta from './PageMeta'
 import styles from './PageView.module.css'
 import { usePage } from './usePage'
@@ -21,6 +23,27 @@ export default function PageView() {
   const location = useLocation()
   const action = useAction()
   const [headings, setHeadings] = useState<Heading[]>([])
+  const more = useRef<HTMLDetailsElement>(null)
+
+  // The ⋯ menu closes on a click outside it and on Escape, like other menus.
+  useEffect(() => {
+    const close = (event: MouseEvent | KeyboardEvent) => {
+      const menu = more.current
+      if (!menu?.open) return
+      if (
+        event instanceof KeyboardEvent
+          ? event.key === 'Escape'
+          : !menu.contains(event.target as Node)
+      )
+        menu.open = false
+    }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', close)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', close)
+    }
+  }, [])
 
   // Keep the address in step with the title (slugs change on publish).
   useEffect(() => {
@@ -125,14 +148,21 @@ export default function PageView() {
                 Edit
               </Link>
             )}
-            <details className={styles.more}>
+            <details ref={more} className={styles.more}>
               <summary className="button" aria-label="More actions">
                 ⋯
               </summary>
-              <div className={styles.menu}>
+              <div
+                className={styles.menu}
+                onClick={(e) => {
+                  // Choosing an item closes the menu.
+                  if ((e.target as Element).closest('a, button')) more.current!.open = false
+                }}
+              >
                 <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
                   Page history
                 </Link>
+                <button onClick={() => void copyLink(here)}>Copy link</button>
                 <button onClick={saveAsTemplate} disabled={action.busy}>
                   Save as template
                 </button>
@@ -166,12 +196,24 @@ export default function PageView() {
         />
 
         {shown.body_md.trim() ? (
-          <MarkdownView markdown={shown.body_md} onHeadings={setHeadings} />
+          <LinkPreviews
+            key={page.short_id}
+            org={org.slug}
+            follow
+            onSection={(id) => {
+              headings.find((h) => h.id === id)?.element.scrollIntoView({ behavior: 'smooth' })
+              history.replaceState(history.state, '', `#${encodeURIComponent(id)}`)
+            }}
+          >
+            <SectionLinks headings={headings} linkBase={here} menu>
+              <MarkdownView markdown={shown.body_md} onHeadings={setHeadings} />
+            </SectionLinks>
+          </LinkPreviews>
         ) : (
           <p className="muted">This page is empty.</p>
         )}
       </article>
-      {shown.body_md.trim() && <Outline headings={headings} />}
+      {shown.body_md.trim() && <Outline key={page.short_id} headings={headings} linkBase={here} />}
     </>
   )
 }

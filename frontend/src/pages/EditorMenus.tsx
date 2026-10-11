@@ -1,6 +1,8 @@
 import type { Editor } from '@tiptap/react'
 import { type KeyboardEvent, type MouseEvent, useEffect, useRef, useState } from 'react'
 import { editImageText, imageSelected } from './captionedImage'
+import { copyLink } from './format'
+import { readHeadings } from './headings'
 import { blockFormats, type Format, insertFormats, matchFormats, textFormats } from './formats'
 import styles from './EditorMenus.module.css'
 
@@ -73,7 +75,8 @@ export function useSlashMenu(editor: Editor | null) {
     const move = (by: number) => setIndex((i) => (i + by + items.length) % items.length)
     if (event.key === 'ArrowDown') move(1)
     else if (event.key === 'ArrowUp') move(-1)
-    else if (event.key === 'Enter' || event.key === 'Tab') choose(items[Math.min(index, items.length - 1)])
+    else if (event.key === 'Enter' || event.key === 'Tab')
+      choose(items[Math.min(index, items.length - 1)])
     else if (event.key === 'Escape') {
       dismissed.current = slash.from
       setSlash(null)
@@ -115,7 +118,7 @@ export function useSlashMenu(editor: Editor | null) {
  * Right-clicking the editor opens text and block styles, applied to whatever
  * is selected. Shift + right-click opens the browser's own menu instead.
  */
-export function useContextMenu(editor: Editor | null) {
+export function useContextMenu(editor: Editor | null, linkBase?: string) {
   const [at, setAt] = useState<Point | null>(null)
   const ref = useRef<HTMLDivElement>(null)
   // The selection before the right button went down, which the browser may collapse.
@@ -132,13 +135,19 @@ export function useContextMenu(editor: Editor | null) {
         editor?.commands.focus()
       }
     }
+    // Focusing the editor can fire a scroll event without moving anything; ignore those.
+    const start = { x: window.scrollX, y: window.scrollY }
+    const scrolled = (event: Event) => {
+      if (event.target !== document || window.scrollX !== start.x || window.scrollY !== start.y)
+        close(event)
+    }
     window.addEventListener('mousedown', close)
-    window.addEventListener('scroll', close, true)
+    window.addEventListener('scroll', scrolled, true)
     window.addEventListener('resize', close)
     window.addEventListener('keydown', escape)
     return () => {
       window.removeEventListener('mousedown', close)
-      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('scroll', scrolled, true)
       window.removeEventListener('resize', close)
       window.removeEventListener('keydown', escape)
     }
@@ -197,6 +206,16 @@ export function useContextMenu(editor: Editor | null) {
 
   const hasSelection = editor ? !editor.state.selection.empty : false
 
+  // The heading the cursor is in, for "Copy link to section".
+  const section = (() => {
+    if (!at || !editor || !linkBase) return null
+    const { node } = editor.view.domAtPos(editor.state.selection.from)
+    const element = (node instanceof Element ? node : node.parentElement)?.closest('h1, h2, h3')
+    return element
+      ? (readHeadings(editor.view.dom).find((h) => h.element === element) ?? null)
+      : null
+  })()
+
   const imageMenu =
     at && editor && imageSelected(editor) ? (
       <div
@@ -208,11 +227,19 @@ export function useContextMenu(editor: Editor | null) {
         onMouseDown={(e) => e.preventDefault()}
         onContextMenu={(e) => e.preventDefault()}
       >
-        <button type="button" role="menuitem" onClick={() => run(() => editImageText(editor, 'caption'))}>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => run(() => editImageText(editor, 'caption'))}
+        >
           <span className={styles.icon}>T</span>
           {editor.getAttributes('image').title ? 'Edit caption…' : 'Add caption…'}
         </button>
-        <button type="button" role="menuitem" onClick={() => run(() => editImageText(editor, 'alt'))}>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => run(() => editImageText(editor, 'alt'))}
+        >
           <span className={styles.icon}>Aa</span>
           Alt text…
         </button>
@@ -236,7 +263,8 @@ export function useContextMenu(editor: Editor | null) {
       </div>
     ) : null
 
-  const menu = imageMenu ??
+  const menu =
+    imageMenu ??
     (at && editor ? (
       <div
         ref={ref}
@@ -289,12 +317,46 @@ export function useContextMenu(editor: Editor | null) {
             {format.label}
           </button>
         ))}
+        {editor.isActive('link') && (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() =>
+              run(() => editor.chain().focus().extendMarkRange('link').unsetLink().run())
+            }
+          >
+            <span className={styles.icon}>⌀</span>
+            Remove link
+          </button>
+        )}
+        {section && (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() =>
+              run(() => void copyLink(`${linkBase}#${encodeURIComponent(section.id)}`))
+            }
+          >
+            <span className={styles.icon}>🔗</span>
+            Copy link to section
+          </button>
+        )}
         <div className={styles.separator} />
-        <button type="button" role="menuitem" disabled={!hasSelection} onClick={() => run(() => void clipboard('cut'))}>
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!hasSelection}
+          onClick={() => run(() => void clipboard('cut'))}
+        >
           <span className={styles.icon} />
           Cut
         </button>
-        <button type="button" role="menuitem" disabled={!hasSelection} onClick={() => run(() => void clipboard('copy'))}>
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!hasSelection}
+          onClick={() => run(() => void clipboard('copy'))}
+        >
           <span className={styles.icon} />
           Copy
         </button>
