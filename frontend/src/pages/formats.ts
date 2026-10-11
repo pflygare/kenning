@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/react'
+import { tones } from './callout'
 
 export type Format = {
   id: string
@@ -23,7 +24,7 @@ export const blockFormats: Format[] = [
     keywords: ['paragraph', 'p', 'normal', 'plain'],
     isActive: (e) =>
       e.isActive('paragraph') &&
-      !['bulletList', 'orderedList', 'blockquote'].some((name) => e.isActive(name)),
+      !['bulletList', 'orderedList', 'taskList', 'blockquote'].some((name) => e.isActive(name)),
     apply: (e) => chain(e).clearNodes().run(),
   },
   ...([1, 2, 3] as const).map(
@@ -53,6 +54,22 @@ export const blockFormats: Format[] = [
     apply: (e) => (e.isActive('orderedList') ? null : chain(e).toggleOrderedList().run()),
   },
   {
+    id: 'checklist',
+    label: 'Checklist',
+    icon: '☑',
+    keywords: ['todo', 'tasks', 'checkbox', 'list'],
+    isActive: (e) => e.isActive('taskList'),
+    apply: (e) => (e.isActive('taskList') ? null : chain(e).toggleTaskList().run()),
+  },
+  {
+    id: 'note',
+    label: 'Note',
+    icon: 'ℹ',
+    keywords: ['callout', 'info', 'alert', 'admonition', 'box', 'panel'],
+    isActive: (e) => e.isActive('callout'),
+    apply: (e) => (e.isActive('callout') ? null : chain(e).setCallout('note').run()),
+  },
+  {
     id: 'quote',
     label: 'Quote',
     icon: '❝',
@@ -70,8 +87,28 @@ export const blockFormats: Format[] = [
   },
 ]
 
+/** A note in each style, found in the "/" menu by the style's name ("/warning"). */
+const noteStyles: Format[] = tones
+  .filter((tone) => tone.id !== 'note')
+  .map((tone) => ({
+    id: tone.id,
+    label: `${tone.label} note`,
+    icon: tone.icon,
+    keywords: ['note', 'callout', 'alert'],
+    isActive: (e) => e.isActive('callout', { tone: tone.id }),
+    apply: (e) => chain(e).setCallout(tone.id).run(),
+  }))
+
 /** Inserted at the cursor from the "/" menu. */
 export const insertFormats: Format[] = [
+  {
+    id: 'table',
+    label: 'Table',
+    icon: '▦',
+    keywords: ['grid', 'rows', 'columns', 'cells'],
+    isActive: () => false,
+    apply: (e) => chain(e).insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+  },
   {
     id: 'divider',
     label: 'Divider',
@@ -125,6 +162,14 @@ export const textFormats: Format[] = [
     apply: (e) => chain(e).toggleStrike().run(),
   },
   {
+    id: 'highlight',
+    label: 'Highlight',
+    icon: '🖍',
+    keywords: [],
+    isActive: (e) => e.isActive('highlight'),
+    apply: (e) => chain(e).toggleHighlight().run(),
+  },
+  {
     id: 'inline-code',
     label: 'Inline code',
     icon: '<>',
@@ -142,7 +187,20 @@ export const textFormats: Format[] = [
   },
 ]
 
+/** Row and column changes, offered by the right-click menu inside a table. */
+export const tableActions: { label: string; icon: string; run: (editor: Editor) => void }[] = [
+  { label: 'Add row above', icon: '↑', run: (e) => chain(e).addRowBefore().run() },
+  { label: 'Add row below', icon: '↓', run: (e) => chain(e).addRowAfter().run() },
+  { label: 'Add column left', icon: '←', run: (e) => chain(e).addColumnBefore().run() },
+  { label: 'Add column right', icon: '→', run: (e) => chain(e).addColumnAfter().run() },
+  { label: 'Delete row', icon: '−', run: (e) => chain(e).deleteRow().run() },
+  { label: 'Delete column', icon: '−', run: (e) => chain(e).deleteColumn().run() },
+  { label: 'Delete table', icon: '✕', run: (e) => chain(e).deleteTable().run() },
+]
+
+/** Opens the link editor, or asks for an address where the screen has none. */
 export function editLink(editor: Editor) {
+  if (editor.commands.editLink()) return
   const previous = editor.getAttributes('link').href as string | undefined
   const url = window.prompt('Link address', previous ?? 'https://')
   if (url === null) return
@@ -162,7 +220,7 @@ export function matchFormats(query: string): Format[] {
     if (f.label.toLowerCase().includes(q)) return 2
     return 3
   }
-  return all
+  return [...all, ...noteStyles]
     .map((f) => [f, score(f)] as const)
     .filter(([, s]) => s < 3)
     .sort((a, b) => a[1] - b[1])

@@ -1,0 +1,140 @@
+/* One hue per style; the fill, rule and label derive from it, so both themes work. */
+[data-callout='note'] {
+  --tone: #2563eb;
+}
+
+[data-callout='tip'] {
+  --tone: #16a34a;
+}
+
+[data-callout='important'] {
+  --tone: #8b5cf6;
+}
+
+[data-callout='warning'] {
+  --tone: #d97706;
+}
+
+[data-callout='caution'] {
+  --tone: #dc2626;
+}
+
+.callout {
+  margin: 0;
+  padding: 0.625rem 1rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--tone) 28%, transparent);
+  border-left: 4px solid var(--tone);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--tone) 8%, var(--surface));
+}
+
+.label {
+  position: relative;
+  margin-bottom: 0.25rem;
+  color: color-mix(in srgb, var(--tone) 80%, var(--text));
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: -0.15rem 0 0 -0.4rem;
+  padding: 0.15rem 0.4rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+.pick:hover,
+.pick[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+}
+
+.caret {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -0.4rem;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 11rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+.menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.menu button:hover {
+  background: var(--surface-muted);
+}
+
+.menu button[aria-checked='true'] {
+  font-weight: 650;
+}
+
+.swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--tone, transparent) 16%, transparent);
+  color: color-mix(in srgb, var(--tone, var(--text)) 85%, var(--text));
+  font-size: 0.75rem;
+}
+
+.separator {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: var(--border);
+}
+
+/* The content sits in the editor's own wrapper inside .body. */
+.body > div > * + * {
+  margin-top: 0.6em;
+}
+
+.body > div > :where(p, h1, h2, h3, ul, ol) {
+  margin-bottom: 0;
+}
+
+.body > div > :where(h1, h2, h3) {
+  margin-top: 0.4em;
+}
+
+.body > div > :first-child {
+  margin-top: 0;
+}

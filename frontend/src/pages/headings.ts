@@ -6,11 +6,12 @@ export type Heading = { id: string; level: number; text: string; element: HTMLEl
 /**
  * Headings of rendered page content, each with an id for linking to it. The id lives only
  * here: the editor owns its DOM and would redraw a heading whose attributes we touched.
+ * Headings inside notes and quotes belong to those, not to the page's outline.
  */
 export function readHeadings(root: HTMLElement): Heading[] {
   const ids = headingIds()
   return [...root.querySelectorAll<HTMLElement>('h1, h2, h3')]
-    .filter((element) => element.textContent?.trim())
+    .filter((element) => element.textContent?.trim() && !element.closest('aside, blockquote'))
     .map((element) => {
       const text = element.textContent!.trim()
       return { id: ids(text), level: Number(element.tagName[1]), text, element }
@@ -47,7 +48,8 @@ function plainText(markdown: string): string {
 
 /**
  * The headings of stored markdown, with the same ids the rendered page gives them, so a
- * link to a section can be made without opening the page.
+ * link to a section can be made without opening the page. Quoted lines (notes, quotes)
+ * never match, since they start with ">".
  */
 export function headingsFromMarkdown(markdown: string): Omit<Heading, 'element'>[] {
   const ids = headingIds()

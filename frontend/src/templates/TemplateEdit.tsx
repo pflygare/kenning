@@ -6,6 +6,7 @@ import type { TemplateDetail } from '../api/types/TemplateDetail'
 import type { UpdateTemplateRequest } from '../api/types/UpdateTemplateRequest'
 import Popover from '../components/Popover'
 import { useContextMenu, useSlashMenu } from '../pages/EditorMenus'
+import { useLinkEditor } from '../pages/LinkEditor'
 import { extensions } from '../pages/editorExtensions'
 import { ImageUpload } from '../pages/imageUpload'
 import PageMeta from '../pages/PageMeta'
@@ -70,6 +71,7 @@ function Editor({ org, api, template }: { org: string; api: string; template: Te
   })
   const slashMenu = useSlashMenu(editor)
   const contextMenu = useContextMenu(editor)
+  const linkEditor = useLinkEditor(editor, org)
 
   const save = useCallback(async () => {
     if (!editor || !pending.current) return
@@ -233,6 +235,7 @@ function Editor({ org, api, template }: { org: string; api: string; template: Te
       </div>
       {slashMenu.menu}
       {contextMenu.menu}
+      {linkEditor}
     </div>
   )
 }

@@ -40,7 +40,9 @@ export default function SearchBox({ org }: { org: string }) {
   const input = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    // In the editor, Ctrl/⌘ K edits a link instead; the editor marks the key handled.
     const focus = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         input.current?.focus()
@@ -81,7 +83,10 @@ export default function SearchBox({ org }: { org: string }) {
   }, [org, q, open])
 
   const titled = new Set((results?.pages ?? []).map((p) => p.short_id))
-  const textHits = q.trim() && text.q === q ? text.hits.filter((h) => !titled.has(h.short_id)).slice(0, TEXT_MATCHES) : []
+  const textHits =
+    q.trim() && text.q === q
+      ? text.hits.filter((h) => !titled.has(h.short_id)).slice(0, TEXT_MATCHES)
+      : []
   const options: Option[] = [
     ...(results?.pages ?? []).map((p) => ({
       key: `p${p.short_id}`,
@@ -105,7 +110,14 @@ export default function SearchBox({ org }: { org: string }) {
       to: topicPath(org, t),
     })),
     ...(q.trim()
-      ? [{ key: 'search', label: `Search all pages for “${q.trim()}”`, kind: 'search' as const, to: searchPath(org, q.trim()) }]
+      ? [
+          {
+            key: 'search',
+            label: `Search all pages for “${q.trim()}”`,
+            kind: 'search' as const,
+            to: searchPath(org, q.trim()),
+          },
+        ]
       : []),
   ]
 
@@ -152,7 +164,9 @@ export default function SearchBox({ org }: { org: string }) {
         // Clicking a match must not blur the field before the click lands.
         <div className={styles.panel} onMouseDown={(e) => e.preventDefault()}>
           <ul className={styles.list} role="listbox" id="search-matches" aria-label="Matches">
-            {!q.trim() && results.pages.length > 0 && <li className={styles.label}>Recently changed</li>}
+            {!q.trim() && results.pages.length > 0 && (
+              <li className={styles.label}>Recently changed</li>
+            )}
             {options.map((option, i) => (
               <li
                 key={option.key}
@@ -210,7 +224,17 @@ export default function SearchBox({ org }: { org: string }) {
 
 export function SearchIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3.5-3.5" />
     </svg>
@@ -219,7 +243,16 @@ export function SearchIcon() {
 
 function PageIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M6 3h8l4 4v14H6z" />
       <path d="M14 3v4h4" />
     </svg>
@@ -228,7 +261,16 @@ function PageIcon() {
 
 function FolderIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
     </svg>
   )
