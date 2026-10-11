@@ -6,7 +6,8 @@ import type { PageDetail } from '../api/types/PageDetail'
 import type { PublishRequest } from '../api/types/PublishRequest'
 import type { TemplateDetail } from '../api/types/TemplateDetail'
 import { useAction } from '../hooks/useAction'
-import { copyLink, pagePath, timeAgo } from './format'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import { copyLink, dateOnly, dateTime, pagePath, timeAgo } from './format'
 import MarkdownView from './MarkdownView'
 import type { Heading } from './headings'
 import LinkPreviews from './LinkPreviews'
@@ -14,6 +15,9 @@ import Outline from './Outline'
 import SectionLinks from './SectionLinks'
 import PageMeta from './PageMeta'
 import styles from './PageView.module.css'
+
+/** Wide enough for the details beside the page as well as the outline. */
+const BESIDE_QUERY = '(min-width: 88rem)'
 import { usePage } from './usePage'
 
 /** A page as readers see it, with the draft controls for editors. */
@@ -24,6 +28,9 @@ export default function PageView() {
   const action = useAction()
   const [headings, setHeadings] = useState<Heading[]>([])
   const more = useRef<HTMLDetailsElement>(null)
+  // With room beside the page as well as for the outline, the page's details sit at the left;
+  // otherwise under its title.
+  const besidePage = useMediaQuery(BESIDE_QUERY)
 
   // The ⋯ menu closes on a click outside it and on Escape, like other menus.
   useEffect(() => {
@@ -94,8 +101,97 @@ export default function PageView() {
     })
   }
 
+  const actions = (
+    <div className="row">
+      {!page.draft && (
+        <Link className="button" to={`${here}/edit`}>
+          Edit
+        </Link>
+      )}
+      <details ref={more} className={styles.more}>
+        <summary className="button" aria-label="More actions">
+          ⋯
+        </summary>
+        <div
+          className={styles.menu}
+          onClick={(e) => {
+            // Choosing an item closes the menu.
+            if ((e.target as Element).closest('a, button')) more.current!.open = false
+          }}
+        >
+          <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
+            Page history
+          </Link>
+          <button onClick={() => void copyLink(here)}>Copy link</button>
+          <button onClick={saveAsTemplate} disabled={action.busy}>
+            Save as template
+          </button>
+          {page.draft && page.published && (
+            <button onClick={discard} disabled={action.busy}>
+              Discard unpublished changes
+            </button>
+          )}
+          <button className="danger" onClick={archive} disabled={action.busy}>
+            Archive page
+          </button>
+        </div>
+      </details>
+    </div>
+  )
+
+  const changed = page.draft?.updated_at ?? page.published_at ?? page.created_at
+  // About the page, then its topics, categories and tags: a box like the outline, to the left
+  // of the page when there's room, else under its title.
+  const details = (
+    <section className={styles.details} aria-label="Page details">
+      <h2 className={styles.label}>About</h2>
+      <dl className={styles.facts}>
+        <dt>Title</dt>
+        <dd>{shown.title}</dd>
+        <dt>{page.authors.length === 1 ? 'Author' : 'Authors'}</dt>
+        <dd>{page.authors.join(', ')}</dd>
+        <dt>Created</dt>
+        <dd title={dateTime(page.created_at)}>{dateOnly(page.created_at)}</dd>
+        <dt>Last changed</dt>
+        <dd title={dateTime(changed)}>{timeAgo(changed)}</dd>
+      </dl>
+      <h2 className={styles.label}>Topics</h2>
+      <PageMeta
+        org={org.slug}
+        api={api}
+        page={page}
+        onChange={setPage}
+        parts={['topics']}
+        className={styles.part}
+      />
+      {(page.categories?.length ?? 0) > 0 && (
+        <>
+          <h2 className={styles.label}>Categories</h2>
+          <PageMeta
+            org={org.slug}
+            api={api}
+            page={page}
+            onChange={setPage}
+            parts={['categories']}
+            className={`${styles.part} ${styles.categoryList}`}
+          />
+        </>
+      )}
+      <h2 className={styles.label}>Tags</h2>
+      <PageMeta
+        org={org.slug}
+        api={api}
+        page={page}
+        onChange={setPage}
+        parts={['tags']}
+        className={styles.part}
+      />
+    </section>
+  )
+
   return (
-    <>
+    <div className={besidePage ? styles.layout : undefined}>
+      {besidePage && <div className={styles.side}>{details}</div>}
       <article className={styles.page}>
         {page.draft && (
           <div className={`notice ${styles.banner}`}>
@@ -132,68 +228,11 @@ export default function PageView() {
         )}
         {action.error && <p className="alert error">{action.error}</p>}
 
-        <PageMeta
-          org={org.slug}
-          api={api}
-          page={page}
-          onChange={setPage}
-          parts={['tags']}
-          className={styles.tags}
-        />
         <header className={styles.header}>
           <h1>{shown.title}</h1>
-          <div className="row">
-            {!page.draft && (
-              <Link className="button" to={`${here}/edit`}>
-                Edit
-              </Link>
-            )}
-            <details ref={more} className={styles.more}>
-              <summary className="button" aria-label="More actions">
-                ⋯
-              </summary>
-              <div
-                className={styles.menu}
-                onClick={(e) => {
-                  // Choosing an item closes the menu.
-                  if ((e.target as Element).closest('a, button')) more.current!.open = false
-                }}
-              >
-                <Link className={`button ${styles.menuLink}`} to={`${here}/history`}>
-                  Page history
-                </Link>
-                <button onClick={() => void copyLink(here)}>Copy link</button>
-                <button onClick={saveAsTemplate} disabled={action.busy}>
-                  Save as template
-                </button>
-                {page.draft && page.published && (
-                  <button onClick={discard} disabled={action.busy}>
-                    Discard unpublished changes
-                  </button>
-                )}
-                <button className="danger" onClick={archive} disabled={action.busy}>
-                  Archive page
-                </button>
-              </div>
-            </details>
-          </div>
+          {actions}
         </header>
-        <p className="muted">
-          {page.published
-            ? `Published by ${page.published_by_name} · ${timeAgo(page.published_at!)}`
-            : `Started by ${shown.author_name} · ${timeAgo(page.created_at)}`}
-          {' · '}
-          <Link className={styles.historyLink} to={`${here}/history`}>
-            History
-          </Link>
-        </p>
-        <PageMeta
-          org={org.slug}
-          api={api}
-          page={page}
-          onChange={setPage}
-          parts={['topics', 'categories']}
-        />
+        {!besidePage && details}
 
         {shown.body_md.trim() ? (
           <LinkPreviews
@@ -213,7 +252,11 @@ export default function PageView() {
           <p className="muted">This page is empty.</p>
         )}
       </article>
-      {shown.body_md.trim() && <Outline key={page.short_id} headings={headings} linkBase={here} />}
-    </>
+      <Outline
+        key={page.short_id}
+        headings={shown.body_md.trim() ? headings : []}
+        linkBase={here}
+      />
+    </div>
   )
 }

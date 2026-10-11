@@ -5,6 +5,7 @@ import type { QuickResults } from '../api/types/QuickResults'
 import type { SearchHit } from '../api/types/SearchHit'
 import type { SearchResults } from '../api/types/SearchResults'
 import { pagePath } from '../pages/format'
+import FolderIcon from '../components/FolderIcon'
 import { topicPath } from '../topics/tree'
 import Marked from './Marked'
 import { searchPath } from './paths'
@@ -180,7 +181,7 @@ export default function SearchBox({ org }: { org: string }) {
                   {option.kind === 'page' || option.kind === 'text' ? (
                     <PageIcon />
                   ) : option.kind === 'topic' ? (
-                    <FolderIcon />
+                    <FolderIcon size="16" />
                   ) : (
                     <SearchIcon />
                   )}
@@ -255,23 +256,6 @@ function PageIcon() {
     >
       <path d="M6 3h8l4 4v14H6z" />
       <path d="M14 3v4h4" />
-    </svg>
-  )
-}
-
-function FolderIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" />
     </svg>
   )
 }

@@ -11,27 +11,13 @@ use uuid::Uuid;
 use crate::{
     AppError, AppResult,
     audit::{self, Event},
-    orgs,
+    colors, orgs,
 };
 
 pub const MAX_NAME: usize = 50;
 pub const MAX_PER_PAGE: usize = 20;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, TS)]
-#[serde(rename_all = "lowercase")]
-#[sqlx(type_name = "text", rename_all = "lowercase")]
-#[ts(export)]
-pub enum TagColor {
-    #[default]
-    Gray,
-    Blue,
-    Green,
-    Amber,
-    Red,
-    Purple,
-    Teal,
-    Pink,
-}
+pub use crate::colors::Color as TagColor;
 
 /// A tag on a page.
 #[derive(Clone, Debug, Serialize, Deserialize, FromRow, TS)]
@@ -120,6 +106,16 @@ async fn find(conn: &mut PgConnection, id: Uuid) -> AppResult<TagRef> {
         .ok_or(AppError::NotFound)
 }
 
+/// The colors the organization's tags have.
+async fn org_colors(conn: &mut PgConnection, org_id: Uuid) -> AppResult<Vec<TagColor>> {
+    Ok(
+        sqlx::query_scalar("SELECT color FROM tags WHERE org_id = $1")
+            .bind(org_id)
+            .fetch_all(&mut *conn)
+            .await?,
+    )
+}
+
 fn taken(name: &str) -> AppError {
     AppError::coded(
         StatusCode::CONFLICT,
@@ -135,6 +131,10 @@ pub async fn create(
     req: &CreateTagRequest,
 ) -> AppResult<TagRef> {
     let (name, slug) = normalize(&req.name)?;
+    let color = match &req.color {
+        Some(color) => color.clone(),
+        None => colors::unused(&org_colors(conn, org_id).await?),
+    };
     let tag: Option<TagRef> = sqlx::query_as(
         "INSERT INTO tags (id, org_id, name, slug, color, created_by) VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (org_id, slug) DO NOTHING
@@ -144,7 +144,7 @@ pub async fn create(
     .bind(org_id)
     .bind(&name)
     .bind(&slug)
-    .bind(req.color.unwrap_or_default())
+    .bind(&color)
     .bind(actor_id)
     .fetch_optional(&mut *conn)
     .await?;
@@ -173,7 +173,7 @@ pub async fn update(
         Some(name) => normalize(name)?,
         None => (tag.name.clone(), tag.slug.clone()),
     };
-    let color = req.color.unwrap_or(tag.color);
+    let color = req.color.clone().unwrap_or(tag.color.clone());
     let clash: bool =
         sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM tags WHERE slug = $1 AND id <> $2)")
             .bind(&slug)
@@ -190,7 +190,7 @@ pub async fn update(
     .bind(id)
     .bind(&name)
     .bind(&slug)
-    .bind(color)
+    .bind(&color)
     .fetch_one(&mut *conn)
     .await?;
     audit::record(
@@ -314,9 +314,15 @@ pub async fn ensure(
     }
     let (names, slugs): (Vec<String>, Vec<String>) = wanted.into_iter().unzip();
     let new_ids: Vec<Uuid> = slugs.iter().map(|_| Uuid::now_v7()).collect();
+    // Colors for any of these that are new; names that already exist keep theirs.
+    let colors: Vec<String> = colors::unused_n(&org_colors(conn, org_id).await?, slugs.len())
+        .into_iter()
+        .map(String::from)
+        .collect();
     let created: Vec<TagRef> = sqlx::query_as(
-        "INSERT INTO tags (id, org_id, name, slug, created_by)
-         SELECT id, $1, name, slug, $2 FROM unnest($3::uuid[], $4::text[], $5::text[]) AS n(id, name, slug)
+        "INSERT INTO tags (id, org_id, name, slug, color, created_by)
+         SELECT id, $1, name, slug, color, $2
+         FROM unnest($3::uuid[], $4::text[], $5::text[], $6::text[]) AS n(id, name, slug, color)
          ON CONFLICT (org_id, slug) DO NOTHING
          RETURNING id, name, slug, color",
     )
@@ -325,6 +331,7 @@ pub async fn ensure(
     .bind(&new_ids)
     .bind(&names)
     .bind(&slugs)
+    .bind(&colors)
     .fetch_all(&mut *conn)
     .await?;
     for tag in &created {

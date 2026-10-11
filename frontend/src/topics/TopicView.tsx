@@ -15,6 +15,7 @@ import { useTopics } from './context'
 import NewTopicForm from './NewTopicForm'
 import { childrenOf, flatten, subtreeIds, topicPath } from './tree'
 import styles from './TopicView.module.css'
+import FolderIcon from '../components/FolderIcon'
 
 /** A topic: where it sits, its sub-topics and its pages. */
 export default function TopicRoute() {
@@ -112,7 +113,10 @@ function TopicView({ topicRef: ref }: { topicRef: string }) {
       ) : (
         <header className={styles.header}>
           <div>
-            <h1>{topic.name}</h1>
+            <h1 className={styles.title}>
+              <FolderIcon className={styles.titleIcon} />
+              {topic.name}
+            </h1>
             {topic.description && <p className={styles.description}>{topic.description}</p>}
           </div>
           <div className="row">
@@ -125,10 +129,18 @@ function TopicView({ topicRef: ref }: { topicRef: string }) {
             <Popover label="⋯" ariaLabel="Topic actions">
               {(close) => (
                 <div role="menu">
-                  <button className="menu-item" role="menuitem" onClick={() => (close(), setEditing(true))}>
+                  <button
+                    className="menu-item"
+                    role="menuitem"
+                    onClick={() => (close(), setEditing(true))}
+                  >
                     Rename and describe…
                   </button>
-                  <button className="menu-item" role="menuitem" onClick={() => (close(), setAdding(true))}>
+                  <button
+                    className="menu-item"
+                    role="menuitem"
+                    onClick={() => (close(), setAdding(true))}
+                  >
                     New sub-topic
                   </button>
                   <div className="menu-separator" />
@@ -168,7 +180,11 @@ function TopicView({ topicRef: ref }: { topicRef: string }) {
                     ))}
                   </select>
                   <div className="menu-separator" />
-                  <button className="menu-item danger" role="menuitem" onClick={() => (close(), archive())}>
+                  <button
+                    className="menu-item danger"
+                    role="menuitem"
+                    onClick={() => (close(), archive())}
+                  >
                     Archive topic
                   </button>
                 </div>
@@ -186,7 +202,10 @@ function TopicView({ topicRef: ref }: { topicRef: string }) {
             {children.map((child) => (
               <li key={child.id}>
                 <Link to={topicPath(org.slug, child)} className={`card ${styles.child}`}>
-                  <span className={styles.childName}>{child.name}</span>
+                  <span className={styles.childName}>
+                    <FolderIcon className={styles.icon} />
+                    {child.name}
+                  </span>
                   <span className="muted">
                     {child.page_count} {child.page_count === 1 ? 'page' : 'pages'}
                   </span>

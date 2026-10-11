@@ -100,7 +100,9 @@ impl Browser {
         let json = if bytes.is_empty() {
             Value::Null
         } else {
-            serde_json::from_slice(&bytes).unwrap()
+            // Bodies axum rejects before a handler runs come back as plain text.
+            serde_json::from_slice(&bytes)
+                .unwrap_or_else(|_| Value::String(String::from_utf8_lossy(&bytes).into()))
         };
         (status, json)
     }

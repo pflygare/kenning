@@ -16,6 +16,7 @@ use uuid::Uuid;
 use crate::{
     AppError, AppResult,
     audit::{self, Event},
+    colors,
     tags::TagColor,
     topics::TopicRef,
 };
@@ -23,18 +24,6 @@ use crate::{
 pub const MAX_NAME: usize = 50;
 pub const MAX_DESCRIPTION: usize = 500;
 pub const MAX_VALUES: usize = 30;
-
-/// Colors handed to a new category's values in order, so they start distinct.
-const VALUE_COLORS: [TagColor; 8] = [
-    TagColor::Green,
-    TagColor::Blue,
-    TagColor::Amber,
-    TagColor::Red,
-    TagColor::Purple,
-    TagColor::Teal,
-    TagColor::Pink,
-    TagColor::Gray,
-];
 
 #[derive(Clone, Debug, Serialize, Deserialize, FromRow, TS)]
 #[ts(export)]
@@ -333,7 +322,9 @@ pub async fn create(
     .execute(&mut *conn)
     .await
     .map_err(|err| name_taken(err, format!("There is already a category called {name}.")))?;
-    for (position, value) in values.iter().enumerate() {
+    // Distinct colors to start with.
+    let colors = colors::unused_n(&[], values.len());
+    for (position, (value, color)) in values.iter().zip(colors).enumerate() {
         sqlx::query(
             "INSERT INTO category_values (id, org_id, category_id, name, color, position)
              VALUES ($1, $2, $3, $4, $5, $6)",
@@ -342,7 +333,7 @@ pub async fn create(
         .bind(org_id)
         .bind(id)
         .bind(value)
-        .bind(VALUE_COLORS[position % VALUE_COLORS.len()])
+        .bind(color)
         .bind(position as i32)
         .execute(&mut *conn)
         .await?;
@@ -464,6 +455,17 @@ pub async fn add_value(
             .bind(category_id)
             .fetch_one(&mut *conn)
             .await?;
+    let color = match &req.color {
+        Some(color) => color.clone(),
+        None => {
+            let used: Vec<TagColor> =
+                sqlx::query_scalar("SELECT color FROM category_values WHERE category_id = $1")
+                    .bind(category_id)
+                    .fetch_all(&mut *conn)
+                    .await?;
+            colors::unused(&used)
+        }
+    };
     if count as usize >= MAX_VALUES {
         return Err(AppError::coded(
             StatusCode::BAD_REQUEST,
@@ -480,10 +482,7 @@ pub async fn add_value(
     .bind(org_id)
     .bind(category_id)
     .bind(&name)
-    .bind(
-        req.color
-            .unwrap_or(VALUE_COLORS[count as usize % VALUE_COLORS.len()]),
-    )
+    .bind(&color)
     .bind(count as i32)
     .execute(&mut *conn)
     .await
@@ -520,7 +519,7 @@ pub async fn update_value(
     .bind(category_id)
     .bind(value_id)
     .bind(&name)
-    .bind(req.color)
+    .bind(&req.color)
     .execute(&mut *conn)
     .await
     .map_err(|err| {

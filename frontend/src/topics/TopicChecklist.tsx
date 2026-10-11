@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Topic } from '../api/types/Topic'
 import { ancestorIds, childrenOf, flatten } from './tree'
 import styles from './TopicChecklist.module.css'
+import FolderIcon from '../components/FolderIcon'
 
 /** How far each level is indented, in rem: enough for a checkbox and its connector. */
 const INDENT = 1.5
@@ -98,6 +99,7 @@ export default function TopicChecklist({
               checked={checked.includes(topic.id)}
               onChange={() => onToggle(topic.id)}
             />
+            <FolderIcon className={styles.icon} />
             <span className={styles.name}>
               {topic.name}
               {words.length > 0 && topic.parent_id && (

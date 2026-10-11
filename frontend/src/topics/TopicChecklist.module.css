@@ -100,3 +100,10 @@
   width: 0.85rem;
   border-top: 1px solid var(--border-strong);
 }
+
+.icon {
+  flex: none;
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--text-muted);
+}

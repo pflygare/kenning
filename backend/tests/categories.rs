@@ -142,6 +142,14 @@ async fn categories_hold_ordered_values_that_admins_manage(pool: PgPool) {
         .await;
     assert_eq!(status, StatusCode::CREATED);
     let class = find(&list, "Information class");
+    // A new value gets a color the category's other values don't have.
+    let colors: Vec<&serde_json::Value> = class["values"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| &v["color"])
+        .collect();
+    assert!(!colors[..3].contains(&colors[3]));
     let secret = value_id(&class, "Secret");
     let (status, list) = ada
         .patch(

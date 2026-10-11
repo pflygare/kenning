@@ -9,6 +9,7 @@ import { useOrg } from '../routes/useOrg'
 import NewPageButton from './NewPageButton'
 import PageRows from './PageRows'
 import styles from './PageList.module.css'
+import { labelStyle } from '../tags/colors'
 
 /** The organization's home: its pages, most recently changed first, optionally by tag. */
 export default function PageList() {
@@ -63,7 +64,7 @@ function Pages({ tagSlug, valueId }: { tagSlug: string | null; valueId: string |
       {valueId && (
         <div className={styles.filter}>
           <span className="muted">{value?.category ?? 'Category'}</span>
-          <span className={`category-value ${value?.color ?? ''}`}>
+          <span className="category-value" style={labelStyle(value?.color)}>
             {value?.name ?? '…'}
             <Link to={`/${org.slug}`} aria-label="Show all pages" className={styles.clear}>
               ×
@@ -74,7 +75,7 @@ function Pages({ tagSlug, valueId }: { tagSlug: string | null; valueId: string |
       {tagSlug && (
         <div className={styles.filter}>
           <span className="muted">Tagged</span>
-          <span className={`tag ${tag?.color ?? ''}`}>
+          <span className="tag" style={labelStyle(tag?.color)}>
             {tag?.name ?? tagSlug}
             <Link to={`/${org.slug}`} aria-label="Show all pages" className={styles.clear}>
               ×

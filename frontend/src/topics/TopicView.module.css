@@ -83,7 +83,30 @@
 }
 
 .childName {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-weight: 600;
+}
+
+.icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-muted);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.titleIcon {
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  color: var(--text-muted);
 }
 
 .addForm {

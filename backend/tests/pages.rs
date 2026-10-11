@@ -191,6 +191,7 @@ async fn a_stale_save_or_publish_is_refused(pool: PgPool) {
     let (_, page) = ada.get(&url).await;
     assert_eq!(page["draft"]["body_md"], "bob");
     assert_eq!(page["draft"]["author_name"], "Bob");
+    assert_eq!(page["authors"], json!(["Ada", "Bob"]));
 }
 
 #[sqlx::test(migrator = "MIGRATOR")]

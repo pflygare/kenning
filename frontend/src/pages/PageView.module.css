@@ -16,6 +16,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .header h1 {
@@ -73,14 +74,77 @@
   text-decoration: none;
 }
 
-.historyLink {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-  text-underline-offset: 2px;
+/* The page's details at the left edge, staying in view while scrolling. */
+.layout {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 2.5rem;
+  max-width: none;
 }
 
-/* Tags sit above the title, like labels tied to the page. */
-.tags {
-  margin: 0 0 0.75rem;
+/* The page stays centered in the space right of the details. */
+.layout > .page {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.side {
+  position: sticky;
+  top: 5.75rem;
+  align-self: start;
+  /* Above the page, so the box's menus open over it rather than under it. */
+  z-index: 3;
+}
+
+/* The page's details: a box like the outline's. */
+.details {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 1.75rem;
+  padding: 0.25rem 1.25rem 1.125rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.side .details {
+  margin: 0;
+}
+
+.label {
+  margin: 0.875rem 0 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.facts {
+  display: grid;
+  padding-left: 0.75rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.facts dt {
+  color: var(--text-muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.part {
+  margin: 0;
+}
+
+/* One category per line: "Information class | Internal". */
+.categoryList :global(.chips) {
+  flex-direction: column;
+  align-items: flex-start;
 }

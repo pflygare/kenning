@@ -5,6 +5,7 @@ import { valueListPath } from '../categories/paths'
 import TagChip from '../tags/TagChip'
 import { pagePath, timeAgo } from './format'
 import styles from './PageList.module.css'
+import { labelStyle } from '../tags/colors'
 
 /**
  * Pages as rows, in columns: title and status, category values, tags, and who
@@ -32,7 +33,8 @@ export default function PageRows({ org, pages }: { org: string; pages: PageSumma
                 node: (
                   <Link
                     to={valueListPath(org, value)}
-                    className={`category-value ${value.color}`}
+                    className="category-value"
+                    style={labelStyle(value.color)}
                     title={`${value.category}: ${value.name}`}
                   >
                     {value.name}

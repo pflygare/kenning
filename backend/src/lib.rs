@@ -5,6 +5,7 @@ pub mod app;
 pub mod audit;
 pub mod auth;
 pub mod categories;
+pub mod colors;
 pub mod config;
 pub mod db;
 pub mod error;

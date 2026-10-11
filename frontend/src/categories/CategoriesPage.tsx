@@ -14,6 +14,7 @@ import ColorPicker from '../tags/ColorPicker'
 import styles from './CategoriesPage.module.css'
 import { valueListPath } from './paths'
 import RequirementPicker, { type Requirement } from './RequirementPicker'
+import { labelStyle } from '../tags/colors'
 
 /** The organization's categories. Owners and admins edit them; everyone can browse by value. */
 export default function CategoriesPage() {
@@ -149,7 +150,10 @@ function NewCategoryForm({
       </div>
       {action.error && <p className="alert error">{action.error}</p>}
       <div className="row">
-        <button className="primary" disabled={action.busy || !name.trim() || valueNames.length === 0}>
+        <button
+          className="primary"
+          disabled={action.busy || !name.trim() || valueNames.length === 0}
+        >
           Create category
         </button>
         <button type="button" onClick={onCancel}>
@@ -181,8 +185,7 @@ function CategoryCard({
   const [renaming, setRenaming] = useState<string | null>(null)
   const [newValue, setNewValue] = useState('')
 
-  const update = (body: UpdateCategoryRequest) =>
-    change(() => apiPatch<Category[]>(api, body))
+  const update = (body: UpdateCategoryRequest) => change(() => apiPatch<Category[]>(api, body))
   const updateValue = (value: CategoryValue, body: UpdateValueRequest) =>
     change(async () => {
       const list = await apiPatch<Category[]>(`${api}/values/${value.id}`, body)
@@ -234,14 +237,26 @@ function CategoryCard({
             {category.description && <p className="card-description">{category.description}</p>}
           </div>
           {canManage && (
-            <Popover label="⋯" ariaLabel={`Actions for ${category.name}`} triggerClass="small ghost">
+            <Popover
+              label="⋯"
+              ariaLabel={`Actions for ${category.name}`}
+              triggerClass="small ghost"
+            >
               {(close) => (
                 <div role="menu">
-                  <button className="menu-item" role="menuitem" onClick={() => (close(), setEditing(true))}>
+                  <button
+                    className="menu-item"
+                    role="menuitem"
+                    onClick={() => (close(), setEditing(true))}
+                  >
                     Rename or describe
                   </button>
                   <div className="menu-separator" />
-                  <button className="menu-item danger" role="menuitem" onClick={() => (close(), remove())}>
+                  <button
+                    className="menu-item danger"
+                    role="menuitem"
+                    onClick={() => (close(), remove())}
+                  >
                     Delete category
                   </button>
                 </div>
@@ -278,7 +293,10 @@ function CategoryCard({
         {category.values.map((value) => (
           <li key={value.id} className={styles.value}>
             {canManage && (
-              <ColorPicker value={value.color} onChange={(color) => void updateValue(value, { color })} />
+              <ColorPicker
+                value={value.color}
+                onChange={(color) => void updateValue(value, { color })}
+              />
             )}
             {renaming === value.id ? (
               <RenameForm
@@ -287,7 +305,11 @@ function CategoryCard({
                 onCancel={() => setRenaming(null)}
               />
             ) : (
-              <Link to={valueListPath(org, value)} className={`category-value ${value.color}`}>
+              <Link
+                to={valueListPath(org, value)}
+                className="category-value"
+                style={labelStyle(value.color)}
+              >
                 {value.name}
               </Link>
             )}
@@ -298,7 +320,11 @@ function CategoryCard({
               <Popover label="⋯" ariaLabel={`Actions for ${value.name}`} triggerClass="small ghost">
                 {(close) => (
                   <div role="menu">
-                    <button className="menu-item" role="menuitem" onClick={() => (close(), setRenaming(value.id))}>
+                    <button
+                      className="menu-item"
+                      role="menuitem"
+                      onClick={() => (close(), setRenaming(value.id))}
+                    >
                       Rename
                     </button>
                     <button
