@@ -74,12 +74,17 @@
   text-decoration: none;
 }
 
-/* The page's details beside it: a column to its left, staying in view while scrolling. */
+/* The page's details at the left edge, staying in view while scrolling. */
 .layout {
   display: grid;
-  grid-template-columns: 15rem minmax(0, 46rem);
+  grid-template-columns: 15rem minmax(0, 1fr);
   gap: 2.5rem;
-  max-width: 63.5rem;
+  max-width: none;
+}
+
+/* The page stays centered in the space right of the details. */
+.layout > .page {
+  width: 100%;
   margin-inline: auto;
 }
 
@@ -118,6 +123,7 @@
 
 .facts {
   display: grid;
+  padding-left: 0.75rem;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.25rem 0.75rem;
   margin: 0;
@@ -141,11 +147,4 @@
 .categoryList :global(.chips) {
   flex-direction: column;
   align-items: flex-start;
-}
-
-/* The page's buttons, above the outline in the docked column. */
-.dockActions {
-  display: flex;
-  flex: none;
-  justify-content: flex-end;
 }

@@ -11,7 +11,7 @@ import { copyLink, dateOnly, dateTime, pagePath, timeAgo } from './format'
 import MarkdownView from './MarkdownView'
 import type { Heading } from './headings'
 import LinkPreviews from './LinkPreviews'
-import Outline, { DOCK_QUERY } from './Outline'
+import Outline from './Outline'
 import SectionLinks from './SectionLinks'
 import PageMeta from './PageMeta'
 import styles from './PageView.module.css'
@@ -28,9 +28,8 @@ export default function PageView() {
   const action = useAction()
   const [headings, setHeadings] = useState<Heading[]>([])
   const more = useRef<HTMLDetailsElement>(null)
-  // With room for the docked column, the page's buttons sit above the outline; with room for
-  // another column too, the page's details sit to its left. Otherwise both stay in the page.
-  const docked = useMediaQuery(DOCK_QUERY)
+  // With room beside the page as well as for the outline, the page's details sit at the left;
+  // otherwise under its title.
   const besidePage = useMediaQuery(BESIDE_QUERY)
 
   // The ⋯ menu closes on a click outside it and on Escape, like other menus.
@@ -231,7 +230,7 @@ export default function PageView() {
 
         <header className={styles.header}>
           <h1>{shown.title}</h1>
-          {!docked && actions}
+          {actions}
         </header>
         {!besidePage && details}
 
@@ -257,7 +256,6 @@ export default function PageView() {
         key={page.short_id}
         headings={shown.body_md.trim() ? headings : []}
         linkBase={here}
-        above={docked ? <div className={styles.dockActions}>{actions}</div> : undefined}
       />
     </div>
   )
