@@ -57,3 +57,10 @@
   background: var(--brand-soft);
   color: var(--brand);
 }
+
+.none {
+  margin: 0;
+  padding: 0.3rem 0.625rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
