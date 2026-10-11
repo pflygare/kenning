@@ -177,10 +177,14 @@
 }
 
 /* Each screen sits centered in the space beside the sidebar (and the outline, when docked).
-   Screens set their own narrower widths; :where keeps this from overriding them. */
+   Screens set their own narrower widths; :where keeps the width from overriding them. */
 :where(.content > *) {
   max-width: 60rem;
-  margin-inline: auto;
+}
+
+/* Centered whatever margins a screen's own rules give it (many set `margin: 0`). */
+.content > * {
+  margin-inline: auto !important;
 }
 
 @media (max-width: 720px) {
