@@ -337,7 +337,7 @@ export function useContextMenu(editor: Editor | null, linkBase?: string) {
               run(() => void copyLink(`${linkBase}#${encodeURIComponent(section.id)}`))
             }
           >
-            <span className={styles.icon}>#</span>
+            <span className={styles.icon}>🔗</span>
             Copy link to section
           </button>
         )}

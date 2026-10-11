@@ -178,7 +178,7 @@ export default function PageView() {
               history.replaceState(history.state, '', `#${encodeURIComponent(id)}`)
             }}
           >
-            <SectionLinks headings={headings} linkBase={here}>
+            <SectionLinks headings={headings} linkBase={here} menu>
               <MarkdownView markdown={shown.body_md} onHeadings={setHeadings} />
             </SectionLinks>
           </LinkPreviews>
